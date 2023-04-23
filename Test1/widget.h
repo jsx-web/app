@@ -44,6 +44,7 @@ private slots:
     void on_Btn_Recv_Clear_clicked();
     void on_Btn_Debug_Clear_clicked();
     void on_Btn_TotalCall_clicked();
+    void on_Btn_Init_clicked();
 };
 
 #endif // WIDGET_H

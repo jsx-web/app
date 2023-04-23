@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <QDebug>
+#include<ctime>
 
 
 //帧的最大容量

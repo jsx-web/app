@@ -107,9 +107,16 @@
     <widget class="QWidget" name="options" native="true">
      <layout class="QHBoxLayout" name="horizontalLayout_6">
       <item>
-       <widget class="QPushButton" name="pushButton_4">
+       <widget class="QPushButton" name="Btn_Init">
         <property name="text">
-         <string>PushButton</string>
+         <string>初始化</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="Btn_TotalCall">
+        <property name="text">
+         <string>总召</string>
         </property>
        </widget>
       </item>
@@ -124,13 +131,6 @@
        <widget class="QPushButton" name="pushButton_2">
         <property name="text">
          <string>PushButton</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="Btn_TotalCall">
-        <property name="text">
-         <string>总召</string>
         </property>
        </widget>
       </item>

@@ -19,10 +19,16 @@ public:
     Frame(char FrameTpye);
     ~Frame();
     unsigned char* GetAPDU();
+    unsigned char* GetAPCI();
+    unsigned char* GetASDU();
+     int Getlen();
     char GerTpye();
+
+    bool SetinitFrame();
     bool SetTotalCall();
-    bool SetStartFrame();
-    int Getlen();
+
+protected:
+    bool setAPDU();
 };
 
 #endif // FRAME_H

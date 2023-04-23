@@ -31,7 +31,8 @@ SOURCES += \
         widget.cpp \
     client.cpp \
     frame.cpp \
-    session.cpp
+    session.cpp \
+    config.cpp
 
 HEADERS += \
         widget.h \
