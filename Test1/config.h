@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <QDebug>
+#include<ctime>
 
 
 //帧的最大容量
@@ -35,6 +36,8 @@ char* Uchar_to_char(char* &Dest,unsigned char* Src,int Size);
 void show_hex(char *buf , int len);
 char* hex_to_char(char **dest , char *src);
 char* my_strncpy(void* Dest,void* src,int size);
+float hextofloat (unsigned int number);
+//int tcpNonblockingRecv(int conn_sockfd, void *rx_buf, int buf_len, int timeval_sec, int timeval_usec);
 
 
 #endif // CONFIG_H

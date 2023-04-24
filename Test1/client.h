@@ -26,5 +26,7 @@ public:
     SOCKET get_socket();
 
 
+
+
 };
 #endif // CLIENT_H

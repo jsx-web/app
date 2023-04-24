@@ -25,13 +25,18 @@ public:
     unsigned char* GetrecvBuf();
     int GetBufLen();
     void SetRecvBuf(char* recv);
+    bool EncodeBuff(unsigned char *recvbuf, int len, unsigned char* C,
+                    unsigned char T1 = 0x00, unsigned char VSQ = 0x00, unsigned char *COT = nullptr,
+                    unsigned char *ASDU_addr=nullptr, unsigned char *obj_addr = nullptr,
+                    unsigned char QOI=0x00, unsigned char *obj = nullptr);
     
     void FrameSend(Client *&client,Frame &Frame);
-//    void RecvThread();
-//    void FrameRecv(Client *&client,Frame &Frame);
+    //void RecvThread();
+    //void FrameRecv(Client *&client,Frame &Frame);
     bool InitSession(Client *&client);
-    bool InitsessionSuccess(SOCKET client);
+    bool InitSessionSuccess(Client *client);
     bool TotalCallSession(Client *&client);
+    bool TotalCallSessionSuccess(Client *client);
     
 
 
