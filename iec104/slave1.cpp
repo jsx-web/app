@@ -134,7 +134,8 @@ int session(int connfd)//命令判定
     {
         clock_reading(connfd);
     }
-
+    else if()
+    {}
     /*for(int i=0;i<cmd_len+2;i++)
     {
         printf("%02x ",cmd[i]);
