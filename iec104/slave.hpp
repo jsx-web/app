@@ -15,7 +15,14 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/time.h>
+#include <errno.h>
 using std::string;
+#define C_RP_NA_1 0x69
+#define M_ME_NC_1 0x0D
+#define F_FR_NA_1 0xD2
+#define F_SUM_XX_1 23
+#define FTP_PATH "/mnt/d/XIAOD/XIAOH/code/"
+#define FTP_PATH_FILE "/mnt/d/XIAOD/XIAOH/code/iec104/"
 /*
     unsigned seed;  // Random generator seed
     // Use the time function to get a "seed” value for srand
@@ -57,10 +64,11 @@ void summon(int connfd);//总召唤确认
 void user_data(int connfd);//发送用户数据
 void summon_stop(int connfd);//总召唤结束
 void clock_syn(int connfd);//时钟同步
+void clock_reading(int connfd);//时钟读取
 void Report(int connfd);//带时标遥信变位
 void Telemetry(int connfd);//故障遥测上送
 void reset(int connfd);//复位进程
-void summon_dir(int connfd);//召唤目录
-void read_file(int connfd);//读文件过程
-void write_file(int connfd);//写文件过程
+void summon_dir(int connfd,unsigned char *rdir);//召唤目录
+void read_file(int connfd,unsigned char * rfilename);//读文件过程
+void write_file(int connfd,unsigned char *wfilename);//写文件过程
 #endif
