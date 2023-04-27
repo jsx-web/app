@@ -32,16 +32,23 @@ SOURCES += \
     client.cpp \
     frame.cpp \
     session.cpp \
-    config.cpp
+    config.cpp \
+    file.cpp \
+    readfiledialog.cpp \
+    fileoperation.cpp
 
 HEADERS += \
         widget.h \
     client.h \
     config.h \
     frame.h \
-    session.h
+    session.h \
+    file.h \
+    readfiledialog.h \
+    fileoperation.h
 
 FORMS += \
-        widget.ui
+        widget.ui \
+    readfiledialog.ui
 
 LIBS += -lpthread libwsock32 libws2_32
