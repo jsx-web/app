@@ -73,6 +73,7 @@ int read_data(int connfd,unsigned char *data,int* cmd_len)
     cout<<"读到的字节： "<<r<<endl;
     *cmd_len=data[1];
     cout<<"帧总长： "<<*cmd_len<<endl;
+    judge_number(data);
     return 1;
 }
 int session(int connfd)//命令判定
@@ -88,7 +89,7 @@ int session(int connfd)//命令判定
     if(cmd_len==4)//判断是哪种格式
     {
         
-        printf("Present Line: %d\n", __LINE__);//打印行数
+        //printf("Present Line: %d\n", __LINE__);//打印行数
         if(cmd[2]&1 && cmd[2]&1<<1 && cmd[3]^1)//判断是不是启动帧
         {
             int i=2;
@@ -118,7 +119,7 @@ int session(int connfd)//命令判定
             }
         }
     }
-    if(cmd_len==16 && cmd[6]==0x64)//总召&& Iec104::m_switch==true 
+    if(cmd_len==14 && cmd[6]==0x64 && cmd[15]==0x14)//总召&& Iec104::m_switch==true 
     {
 
         summon(connfd); 
@@ -128,7 +129,7 @@ int session(int connfd)//命令判定
     /*68：启动字符；14：APDU长度；02 00 0200：4个控制域8位位组；67：类型标识，时钟同步命令；01：可变结构限定词；0600：传送原因，激活；01 00：公共地址ASDU地址；00 00 00 信息体地址；
     94 07：秒和毫秒，低字节在前，0794H=1940，即1秒940毫秒；05：分，05分；0a：时，10时；1c：日，28日；07：月，7月；04：年，2004年。
     */
-        clock_syn(connfd);
+        clock_syn(connfd,cmd);
 
     }else if(Iec104::m_switch==true&&cmd[6]==0x67 &&cmd[8]==0x05)//时钟读取
     {
@@ -144,7 +145,7 @@ int session(int connfd)//命令判定
     }else if(Iec104::m_switch==true&&cmd[6]==0xD2 &&cmd[8]==0x06 && cmd[15]==0x02 && cmd[16]==0x03)//读文件
     {
         read_file(connfd,cmd);
-    }else if(Iec104::m_switch==true&&cmd[6]==0xD2 &&cmd[8]==0x06 && cmd[15]==0x02 && cmd[16]==0x07)//读文件
+    }else if(Iec104::m_switch==true&&cmd[6]==0xD2 &&cmd[8]==0x06 && cmd[15]==0x02 && cmd[16]==0x07)//写文件
     {
         write_file(connfd,cmd);
     }
@@ -184,6 +185,7 @@ void summon(int connfd)//总召确认
     unsigned char sumbuf[255] = {0x68,0x0E,0x00,0x00,0x00,0x00,0x64,0x01,0x07,0x00,0x01,0x00,0x00,0x00,0x00,0X14};
     change_wnumber(sumbuf);
     sumbuf[2]=Iec104::m_w1;
+    cout<<"send确认"<<endl;
     send(connfd,sumbuf,sumbuf[1]+2,0);
     sleep(1);
     cout<<"总召确认"<<endl;
@@ -191,11 +193,12 @@ void summon(int connfd)//总召确认
 }
 void summon_stop(int connfd)//总召结束
 {
+    //68 0E 00 00 00 00 64 01 0A 00 01 00 00 00 00 14
     unsigned char sumbufstop[255] = {0x68,0x0E,0x00,0x00,0x00,0x00,0x64,0x01,0x0A,0x00,0x01,0x00,0x00,0x00,0x00,0X14};
     //发送接收序号要改
     change_wnumber(sumbufstop);
     send(connfd,sumbufstop,sumbufstop[1]+2,0);
-    cout<<"总召确认"<<endl;
+    cout<<"总召结束"<<endl;
     sleep(1);
 }
 void user_data(int connfd)//传输用户数据 COT=20 SQ=1
@@ -203,7 +206,7 @@ void user_data(int connfd)//传输用户数据 COT=20 SQ=1
     unsigned seed; 
     seed = time(0);
     srand(seed);
-    cout << rand() << " " ;
+    //cout << rand() << " " ;
     int i=20;//用户数据数量
     while(i--)
     {
@@ -220,12 +223,12 @@ void user_data(int connfd)//传输用户数据 COT=20 SQ=1
         }
         udata[1] = num*5+11;
         send(connfd,udata,udata[1]+2,0);
-        sleep(0.5);
+        usleep(100000);
     }
     sleep(1);
     summon_stop(connfd);
 }
-void clock_syn(int connfd)//时钟同步
+void clock_syn(int connfd,unsigned char* cmd)//时钟同步
 {
     time_t timep;
     struct tm *p;
@@ -234,7 +237,7 @@ void clock_syn(int connfd)//时钟同步
     p = localtime(&timep);//用localtime将秒数转化为struct tm结构体
     //char *wday[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
     unsigned char utime[255] = {0x68,0x14,0x00,0x00,0x00,0x00,0x67,0x01,0x07,0x00,0x01,0x00,0x00,0x00,0x00};//后面传时间
-    change_wnumber(utime);
+    /*change_wnumber(utime);
     gettimeofday(&tv, NULL);
     int milli = tv.tv_usec / 1000;//计算毫秒
     utime[15]=tv.tv_usec%255;//
@@ -243,8 +246,15 @@ void clock_syn(int connfd)//时钟同步
     utime[18]= p->tm_hour;
     utime[19]= p->tm_mday+p->tm_wday*32;
     utime[20]= p->tm_mon +1;
-    utime[21]= p->tm_year-100;
-
+    utime[21]= p->tm_year-100;*/
+    /*更新系统时间*/
+    utime[15]=cmd[15];
+    utime[16]=cmd[16];
+    utime[17]= cmd[17];//分钟
+    utime[18]= cmd[18];
+    utime[19]= cmd[19];
+    utime[20]= cmd[20];
+    utime[21]= cmd[21];
     send(connfd,utime,utime[1]+2,0);
 }
 void clock_reading(int connfd)//时钟读取
@@ -525,10 +535,10 @@ void write_file(int connfd,unsigned char *wfilename)//写文件过程
     }
     unsigned char wfilesize[255]={'0'};//文件大小
     unsigned char filename[255]={'0'};
-    strcpy((char *)filename,FTP_PATH_FILE);//文件路径
+    strcpy((char *)filename,FTP_PATH_RE_FILE);//接收文件路径
     strcat((char *)filename,(char *)wfile);//指定路径下的文件
     cout<<"文件路径"<<(char *)filename<<endl;
-    FILE* fd = fopen((char *)filename,"w");
+    FILE* fd = fopen((char *)filename,"wa");
     int num=0;//记录发送数组的相对下标
     int errNum=0;
     if(fd == NULL)//打开写入文件失败
@@ -557,15 +567,63 @@ void write_file(int connfd,unsigned char *wfilename)//写文件过程
         wfilebuf[1]=18+num;
         change_wnumber(wfilebuf);
         send(connfd,wfilebuf,wfilebuf[1]+2,0);//成功发送确认
-    }
-    unsigned char data[255]={'0'};
-    int len = 0;
-    {
-        
+        cout<<"写文件激活确认"<<endl;
         sleep(1);
-        read_data(connfd,data,&len);
-        
+        unsigned char data[255]={'0'};
+        int len = 0;
+        int datanumber = 0;//数据段号
+        while(1)
+        {
+            
+            unsigned char file_content[255]={'0'};
+            int k= read_data(connfd,data,&len);
+            if(k<0)
+            {
+                cout<<"写文件接收失败"<<endl;
+            }
+            for(int i=0;i<data[1]+2;i++)//显示出报文
+            {
+                printf("%02x ",data[i]);
+            }
+            union Data
+            {
+                unsigned int a;
+                unsigned char filelong[4];
+            }datalong;
+            datalong.filelong[0]=data[21];
+            datalong.filelong[1]=data[22];
+            datalong.filelong[2]=data[23];
+            datalong.filelong[3]=data[24];
+            int j = datalong.a - datanumber;
+            int i = 0;
+            for(;i < j;i++)
+            {
+                file_content[i] = data[26+i];
+            }
+            fwrite(file_content,i,1,fd);
+            datanumber=datalong.a;
+            if(data[25] == 0x00)
+                break;
+            memset(data,0,255);
+            memset(file_content,0,255);
+            datalong.a=0;
+        }
+        fclose(fd);
+        unsigned char swfilebuf[255] = {0x68,0x18,0x00,0x00,0x00,0x00,F_FR_NA_1,0x00,0x05,0x00,0x01,0x00,0x00,0x00,0x00,0x02,0x0a,0x00};
+        union Z
+        {
+        unsigned int a;
+        unsigned char filelong[4];
+        }z;
+        z.a=datanumber;
+        z.filelong[0]=swfilebuf[21];
+        z.filelong[1]=swfilebuf[22];
+        z.filelong[2]=swfilebuf[23];
+        z.filelong[3]=swfilebuf[24];
+        send(connfd,swfilebuf,swfilebuf[1]+2,0);//写文件传输确认
+        cout<<"写文件传输确认"<<endl;
     }
+    
 }
 void change_wnumber(unsigned char *w)//序号转化
 {
@@ -578,24 +636,40 @@ void change_wnumber(unsigned char *w)//序号转化
     w[2]=Iec104::m_w1;
     w[3]=Iec104::m_w2;
 }
-/*int read_data(int connfd,unsigned char *data,int* cmd_len)
+void change_rnumber(unsigned char *r)//收序号转化
 {
-    unsigned char ch='0';
-    int r = read(connfd,&ch,1);
-    if(r==-1)//||ch!=0x68
+    Iec104::m_r1=Iec104::m_r1+2;
+    if(Iec104::m_r1==0xFE)
     {
-        cout<<("read error")<<endl;
-        close(connfd);
-        sleep(2);
-        return -1;
-    }else if(ch!=0x68)
-    {
-        cout<<"格式错误"<<endl;
-        return -1;
+        Iec104::m_r2++;
+        Iec104::m_r1-=0xFE;
     }
-    read(connfd,&ch,1);
-    *cmd_len=(int)ch;
-    cout<<"帧总长： "<<*cmd_len<<endl;
-    read(connfd,data,*cmd_len);
-    return 1;
-}*/
+    r[4]=Iec104::m_r1;
+    r[5]=Iec104::m_r2;
+}
+void *Report_data(void* connfd1)//实时发送报文
+{
+    int connfd =*(int *)connfd1;
+    if(Iec104::m_switch==true)
+    {
+        while(1)
+        {
+            sleep(3);
+            Telemetry_up(connfd);
+        }
+    }
+    //close(connfd);
+    //exit(0);
+    return 0;
+}
+void judge_number(unsigned char *data)//收发序号的判定
+{
+    if(Iec104::m_switch==true)
+    {
+        if(data[2]==Iec104::m_w1 && data[3]==Iec104::m_w2 && data[3]==Iec104::m_r1 && data[4]==Iec104::m_r2){
+            cout<<"报文数量正常"<<endl;
+        }else{
+            cout<<"报文数量异常"<<endl;
+        }
+    }
+}
