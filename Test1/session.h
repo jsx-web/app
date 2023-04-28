@@ -8,6 +8,8 @@
 #include "config.h"
 #include "file.h"
 #include "fileoperation.h"
+#include <QTextEdit>
+#include <QTextBrowser>
 
 using namespace std;
 
@@ -22,6 +24,10 @@ private:
     bool isInit; // 初始化成功/失败
     Client *client_session;
 public:
+    QTextEdit *recv_Edit;
+    void updata_recv_edit(unsigned char* data);
+    QTextBrowser *debug_Edit;
+    void updata_debug_edit(unsigned char* data);
     Session();
     ~Session();
     unsigned char* GetrecvBuf();
@@ -59,7 +65,7 @@ public:
     bool ReadFileSessionSuccess(Client *client);
 
 signals:
-    void isDone();  //处理完成信号
+    void Recv(char* buf);  //接收数据信号
     
 };
 

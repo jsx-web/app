@@ -32,6 +32,7 @@ public:
     bool SetReset();
     bool SetDirCall(char* DirName,char CallFlage = 0x00,st_cp56time2a start = {.Time = 0x00000000000000},st_cp56time2a end = {.Time = 0x00000000000000});
     bool SetReadFile(char* FileName);
+    bool SetWriteFile(char* FileName);
 
 
 

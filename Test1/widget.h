@@ -25,6 +25,7 @@ public:
     ~Widget();
 
 //friend class Client;
+friend class Session;
 
 private:
     Ui::Widget *ui;
@@ -37,8 +38,8 @@ public:
     QThread* thread;
 
 public:
-    void recvEidt_updata();
     void on_Btn_Read_my_clicked(char* DirName = "iec104");
+    void recvEidt_updata(char *data);
 
 private slots:
     void on_Btn_Connect_clicked();

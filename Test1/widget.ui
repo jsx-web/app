@@ -7,13 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>597</width>
-    <height>507</height>
+    <height>480</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Widget</string>
+   <string>104主站</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_3">
+  <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
     <widget class="QWidget" name="widget" native="true">
      <layout class="QHBoxLayout" name="horizontalLayout_5">
