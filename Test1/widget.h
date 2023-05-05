@@ -11,6 +11,11 @@
 #include "frame.h"
 #include "session.h"
 #include "readfiledialog.h"
+#include <QTableView>
+#include <QStandardItemModel>
+#include <QPropertyAnimation>
+#include <QMenu>
+#include <QAction>
 
 namespace Ui {
 class Widget;
@@ -30,20 +35,41 @@ friend class Session;
 private:
     Ui::Widget *ui;
     ReadFileDialog *readDialog;
-public:
+    bool m_bSideflag;
+    QPropertyAnimation *m_propertyAnimation;
     QButtonGroup *C_S_check;
     Client *client;
     int isconnect;
     Session *session;
     QThread* thread;
+    QStandardItemModel* model;
+
+//---------实现右键菜单------
+private:
+     QMenu *popMenu; //菜单
+     QAction *actionShowAll;
+     QAction *actionEncode;
+     QAction *actionTag;
+public:
+    void MenuInit();
+private slots:
+    //右键菜单响应函数
+    void slotContextMenu(QPoint pos);
+    //显示全部
+    void slotactionShowAll();
+    //解析报文
+    void slotactionEncode();
+    //标记此行
+    void slotactionTag();
+//-------------------------
 
 public:
-    void on_Btn_Read_my_clicked(char* DirName = "iec104");
+    void on_Btn_Read_my_clicked(char* DirName = (char*)"iec104");
     void recvEidt_updata(char *data);
+    void TablaViewInit();
 
 private slots:
     void on_Btn_Connect_clicked();
-    void on_Btn_send_clicked();
     void on_Btn_Close_clicked();
     void on_Btn_Recv_Clear_clicked();
     void on_Btn_Debug_Clear_clicked();
@@ -55,6 +81,8 @@ private slots:
     void on_Btn_DirCall_clicked();
     void on_Btn_Read_clicked();
     void EnablSuccess_res(bool ret,QString name);
+    void on_Btn_FileTransfer_clicked();
+
 signals:
     void WidgetReadFile(bool end, char* packe_data);
 };

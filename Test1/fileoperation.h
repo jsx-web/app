@@ -38,7 +38,7 @@ public:
     unsigned char getCRC();
     void setCRC(char crc);
     void setFileOpSize(void *size);
-    bool writeFile(char* Name = "data.txt",char* data = "hello");
+    bool writeFile(char* Name = (char*)"data.txt",char* data = (char*)"hello");
     
     int getIntOffset(void* offset);
 };

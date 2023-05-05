@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string.h>
 #include <QDebug>
+#include <QTimer>
 #include<ctime>
 #include <QString>
 #include <QThread>
@@ -43,7 +44,6 @@ using namespace std;
 
 //
 #define PATH "D:/app/data/"  //默认文件存储目录
-
 
 char* Uchar_to_char(char* &Dest,unsigned char* Src,int Size);
 void show_hex(char *buf , int len);
