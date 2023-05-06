@@ -35,7 +35,8 @@ SOURCES += \
     config.cpp \
     file.cpp \
     readfiledialog.cpp \
-    fileoperation.cpp
+    fileoperation.cpp \
+    dialog_showall.cpp
 
 HEADERS += \
         widget.h \
@@ -45,10 +46,12 @@ HEADERS += \
     session.h \
     file.h \
     readfiledialog.h \
-    fileoperation.h
+    fileoperation.h \
+    dialog_showall.h
 
 FORMS += \
         widget.ui \
-    readfiledialog.ui
+    readfiledialog.ui \
+    dialog_showall.ui
 
 LIBS += -lpthread libwsock32 libws2_32

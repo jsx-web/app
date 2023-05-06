@@ -34,11 +34,11 @@ public:
     unsigned char getFollowFlage();
     void setFollowFlage(char followFlage);
     unsigned char* getFileDate();
-    void setFileDate(void* fileDate);
+    void setFileDate(void* fileDate,char* path = nullptr);
     unsigned char getCRC();
     void setCRC(char crc);
     void setFileOpSize(void *size);
-    bool writeFile(char* Name = (char*)"data.txt",char* data = (char*)"hello");
+    bool writeFile(char* Name = (char*)"data.txt",char* data = (char*)"hello",char *path = nullptr);
     
     int getIntOffset(void* offset);
 };

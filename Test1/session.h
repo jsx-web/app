@@ -12,11 +12,15 @@
 #include <QTextBrowser>
 #include <QTableView>
 #include <QStandardItemModel>
+#include <QProgressBar>
+#include <QLabel>
 
 using namespace std;
 
-class Session
+class Session:public QObject
 {
+    Q_OBJECT
+
 private:
     unsigned char *recvBuf;
     int bufLen;
@@ -26,12 +30,28 @@ private:
     bool isInit; // 初始化成功/失败
     Client *client_session;
 public:
+    //-----------接收框显示--------
     QTableView *recv_TableView;
     QStandardItemModel* table_model;
     void append_data(int author,char type,QString &data);
-    void updata_recv_edit(unsigned char* data);
-    QTextBrowser *debug_Edit;
-    void updata_debug_edit(unsigned char* data);
+    void updata_recv_edit(int author,unsigned char* data);
+    //----------召唤目录显示--------
+    QTableView *dir_TableView;
+    QStandardItemModel* dirname_model;
+    void show_dirname(char* name,int n);
+signals:
+    //---------调试消息显示-------
+    void UpdataDebugEdit(QString msg);
+    //---------进度条控制--------
+    void ReadMax(int maxSize);  //读文件最大值信号
+    void ReadValue(int Value);//Value值更新信号
+    void WriteMax(int maxSize);  //写文件最大值信号
+    void WriteValue(int Value);//Value值更新信号
+   //---------激活标签控制---------
+   void ReadLabelEnable(int status);
+   void WriteLabelEnable(int status);
+
+public:
     Session();
     ~Session();
     unsigned char* GetrecvBuf();
@@ -65,8 +85,8 @@ public:
     bool DirCallSession(Client *client,char* DirName);
     bool DirCallSessionSuccess(Client *client);
     //文件读取
-    bool ReadFileSession(Client *client,char* DirName);
-    bool ReadFileSessionSuccess(Client *client);
+    bool ReadFileSession(Client *client,char* RFileName);
+    bool ReadFileSessionSuccess(Client *client,QString DirName=QString());
 
 signals:
     void Recv(char* buf);  //接收数据信号

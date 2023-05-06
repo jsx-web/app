@@ -43,6 +43,7 @@ private:
     Session *session;
     QThread* thread;
     QStandardItemModel* model;
+    QStandardItemModel* dir_model;
 
 //---------实现右键菜单------
 private:
@@ -64,6 +65,24 @@ private slots:
 //-------------------------
 
 public:
+    void ProgressBarIint();
+private slots:
+    //读文件进度条最大值设置
+    void slotReadPorgressMax(int Max);
+    //读文件Value值更新
+    void slotReadValue(int Value);
+    //写文件进度条最大值设置
+    void slotWritePorgressMax(int Max);
+    //写文件Value值更新
+    void slotWriteValue(int Value);
+    //读文件标签
+    void slotReadLabel(int status);
+    //写文件标签
+    void slotWriteLabel(int status);
+    //更新调试框
+    void slotUpdataDebugEidt(QString msg);
+
+public:
     void on_Btn_Read_my_clicked(char* DirName = (char*)"iec104");
     void recvEidt_updata(char *data);
     void TablaViewInit();
@@ -82,6 +101,7 @@ private slots:
     void on_Btn_Read_clicked();
     void EnablSuccess_res(bool ret,QString name);
     void on_Btn_FileTransfer_clicked();
+    void on_Btn_DirSelect_clicked();
 
 signals:
     void WidgetReadFile(bool end, char* packe_data);
