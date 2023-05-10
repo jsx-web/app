@@ -1,0 +1,1441 @@
+#include "session.h"
+#include "client.h"
+#include <QtConcurrent>
+
+
+
+/*
+    @author: 0是主站，1是从站
+    @data: 显示的字符串
+*/
+void Session::updata_recv_edit(int author , unsigned char *data)
+{
+//    cout << "1" << endl;
+    char *recv_ch;
+    QString recv_str;
+    char type;
+//    cout << "2" << endl;
+    if(data[0] == 0x68)
+    {
+        int n = data[1] + 2;
+        recv_ch = new char[n];
+
+        cout << "recvEidt_updata "<< n << " bit" <<":" ;//<<  bufrecv << endl;
+        //show_hex(data,n);
+        SetRecvBuf((char*)data);
+        hex_to_char(&recv_ch,(char*)data);
+//        cout << "3" << endl;
+        cout << recv_ch << endl;
+        recv_str = QString(recv_ch);
+        //qDebug() << "recv_str: " << recv_str;
+
+        if(n > 6)
+        {
+            char c1 = data[2]&0x01;
+            char c2 = data[4]&0x01;
+            if((c1 == 0x00)&&(c2 == 0x00))
+            {
+                type = 'I';
+            }
+            else
+            {
+                type = '-';
+            }
+        }else if(n == 6)
+        {
+            char c1 = data[2]&0x03;
+            char c2 = data[4]&0x01;
+            if((c1 == 0x01)&&(c2 == 0x00))
+            {
+                type = 'S';
+            }
+            else if((c1 == 0x03)&&(c2 == 0x00))
+            {
+                type = 'U';
+            }else
+            {
+                type = '-';
+            }
+        }else
+        {
+            type = '-';
+        }
+    }else
+    {
+         recv_str = QString((char*)data);
+    }
+    //将数据更新到TableView中
+    emit append_data(author,type,recv_str);
+}
+
+
+
+
+Session::Session()
+{
+    recvBuf = new unsigned char[256];
+    memset(recvBuf,0,256);
+    bufLen = 0;
+    SendFrame = nullptr;
+    isInit = true;
+    RecvFrame = nullptr;
+    client_session = nullptr;
+    t0 = CONNTIMEOUT;
+    t1 = TESTFRAMETIMEOUT;
+    t2 = NOFRAMETIMEOUT;
+    t3 = FREETIMEOUT;
+    test_t4 = TESTTIME;
+    WaitRecvTest = false;
+    V_S = 0;    //发送状态变量
+    V_R = 0;    //接收状态变量
+    ACK = 0;    //当前已经正确收到的所有I格式
+    
+}
+
+Session::~Session()
+{
+    recvBuf = nullptr;
+    SendFrame = nullptr;
+    RecvFrame = nullptr;
+    client_session = nullptr;
+
+    delete client_session;
+    delete RecvFrame;
+    delete SendFrame;
+    delete recvBuf;
+}
+
+unsigned char* Session::GetrecvBuf()
+{
+    return recvBuf;
+}
+
+int Session::GetBufLen()
+{
+    return bufLen;
+}
+
+Frame Session::GetSendFrame()
+{
+    if(SendFrame == nullptr)
+    {
+        cout << "SendFrame = nullptr" << endl;
+    }
+    return *SendFrame;
+}
+
+void Session::SetRecvBuf(char *recv)
+{
+    int n = recv[2]+2;
+    my_strncpy(recvBuf,recv,n);
+}
+
+bool Session::EncodeBuff(unsigned char *recvbuf, unsigned char len, unsigned char *C,
+                         unsigned char T1, unsigned char VSQ, unsigned char *COT,
+                         unsigned char *ASDU_addr, unsigned char *obj_addr,
+                         unsigned char QOI, unsigned char *obj)
+{
+    bool sure = true;
+    if(0x68 != recvbuf[0]){cout << "0x68" << endl;sure=false;}
+    if(len != recvbuf[1]){cout << "len" << endl;sure=false;}
+    if(((recvbuf[2]&(unsigned char)0x01) != 0x00)&&((recvbuf[4]&(unsigned char)0x01) != 0x00))
+    {
+        cout << "C1" << endl;
+        //if(C[0] != recvbuf[2]&&C[1] != recvbuf[3]&&C[2] != recvbuf[4]&&C[3] != recvbuf[5])
+        //{
+            cout << "C2" << endl;
+            sure=false;
+        //}
+    }
+    if(len > 0x04)
+    {
+        if(T1 != recvbuf[6]){cout << "T1="<< T1 << "recvbuf[6]=" << recvbuf[6] << endl;sure=false;}
+        if(VSQ != recvbuf[7]){cout << "VSQ="<< VSQ << "recvbuf[7]=" << recvbuf[7] << endl;sure=false;}
+        if(COT[0] != recvbuf[8] && COT[1] != recvbuf[9])
+        {
+            cout << "COT[0]="<< COT[0] << "recvbuf[7]=" << recvbuf[8] << endl;
+             cout << "COT[1]="<< COT[1] << "recvbuf[8]=" << recvbuf[9] << endl;
+            sure=false;
+        }
+        if(ASDU_addr[0] != recvbuf[10] && ASDU_addr[1] != recvbuf[11])
+        {
+            cout << "ASDU_addr" << endl;
+            sure=false;
+        }
+        if(obj_addr[0] != recvbuf[12] && obj_addr[1] != recvbuf[13]&& obj_addr[1] != recvbuf[14])
+        {
+            cout << "obj_addr" << endl;
+            sure=false;
+        }
+    }
+    if(sure){cout << "judge success" << endl;}
+    else{cout << "judge error" << endl;}
+    return sure;
+}
+
+
+void Session::FrameSend(Client *&client, Frame &frame)
+{
+    cout << "-----------"<< __FUNCTION__ <<"-----------------" << endl;
+    if(client->socketEmpty())
+    {
+        cout << "socket create fail,please create connect " << endl;
+    }
+    else
+    {
+        //show_hex((char*)(GetSendFrame().GetAPDU()),GetSendFrame().GetAPDU()[1]+2);
+        client->write(frame.GetAPDU());
+    }
+    cout << "----------------------------" << endl;
+}
+
+int Session::FrameRecv(Client *&client,unsigned char (&recvBuff)[BUF_LEN])
+{
+
+    int n = recv(client->get_socket(),(char*)recvBuff,BUF_LEN,0);
+//    if(((recvBuff[2]&0x01 == 0x00) && (recvBuff[4]&0x01 == 0x00))){/*处理*/}        //如果是I帧
+    if(n>1){cout << "-----------"<< __FUNCTION__ << "-----------------" << endl;}
+    if(n == 6)  //如果是U帧和S帧
+    {
+        if((recvBuff[2] == U_BIT_1_TEST_ACT)) //U帧
+        {
+            cout << "testFrame recv" << endl;
+            WaitRecvTest = false;
+           n = -1;
+        }
+    }
+    if(n>1){cout << "---------------------------------" << endl;}
+    return n;
+}
+
+bool Session::IFrameCBlocksSerialNumber(char (&C)[4])
+{
+    //发送序号&&接收序号
+    if(V_S<0x7fff&&V_R<0x7fff)
+    {
+        if(V_S > 0xfe)   //0xFF
+        {
+            C[0] = (V_S&0x7f)<<1;
+            C[1] = (V_S>>7)&0xff;
+        }else
+        {
+            C[0] = (V_S&0x7f)<<1;
+            C[1] = 0;
+        }
+        V_S++;
+        if(V_R > 0xfe)   //0xFF
+        {
+            C[2] = (V_R&0x7f)<<1;
+            C[3] = (V_R>>7)&0xff;
+        }else
+        {
+            C[2] = (V_R&0x7f)<<1;
+            C[3] = 0;
+        }
+        return true;
+    }
+    else
+    {
+        cout << "V_S or V_R is out of rang" << endl;
+        return false;
+    }
+}
+
+bool Session::IFrameCBlocksSerialConfirm(char (&C)[4])
+{
+    //为了保证通信的兼容性，接收方在接收数据时只检查接收序列号，发送序列号不予检查。
+    int RcvNum = (C[3]<<7)+(C[2]>>1);
+    if(RcvNum == V_S)
+    {
+        cout << "SerialConfirm is correct" << endl;
+        return true;
+    }
+    else
+    {
+        cout << "SerialConfirm is wrongs" << endl;
+        return false;
+    }
+}
+
+bool Session::TestSession(Client *&client)
+{
+     cout << __FUNCTION__ << endl;
+    while(1){
+        if(!WaitRecvTest)
+        {
+            client_session = client;
+            test_start = clock();
+            while(1)
+            {
+                test_end=clock();		//程序结束用时
+                test_clc=(double)(test_end-test_start)/CLOCKS_PER_SEC;
+                if(test_clc>test_t4)
+                {
+                    cout << "send testFrame" << endl;
+                    cout << "-----------"<< __FUNCTION__  <<"-----------------" << endl;
+                    SendFrame = new Frame('U');
+                    cout << "is_setFrame: " << SendFrame->setTestFrame() << endl;
+                    updata_recv_edit(2,SendFrame->GetAPDU());
+                    this->FrameSend(client_session,*SendFrame);
+                    WaitRecvTest = true;
+                    emit TestConfirm();  //通知Widget开启一个线程去判断在t1内是否收到测试帧
+                    test_start = 0;
+                    test_end = 0;
+                    break;
+                    cout << "---------------------------------" << endl;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+bool Session::TestSessionSuccess(Client *&client)   //判定是否收到测试帧超时
+{
+        unsigned char recvbuff[BUF_LEN];
+        //开启计时
+        t1_start = clock();
+        while(WaitRecvTest)
+        {
+            FrameRecv(client,recvbuff);
+            t1_end = clock();
+            t1_clc=(double)(t1_end-t1_start)/CLOCKS_PER_SEC;
+            if(t1_clc>t1)   //超时
+            {
+                cout << "-----------"<< __FUNCTION__  <<"-----------------" << endl;
+                cout << "recv testFrame timeout" << endl;
+                t1_end = 0;
+                t1_start = 0;
+                emit TestConfirmTimeOut();
+                return false;
+                cout << "---------------------------------" << endl;
+            }
+        }
+        t1_end = 0;
+        t1_start = 0;
+    return true;
+}
+
+bool Session::ConnectSession(Client *&client, QString IP, qint16 Port)
+{
+    cout << "connect ==== session " << endl;
+    int ret = -1;
+    t0_start=clock();
+    while(1)
+    {
+        ret = client->clinetConnect(IP,Port);
+        if(ret != 0)
+        {
+            //连接失败
+            t0_end=clock();		//程序结束用时
+            t0_clc=(double)(t0_end-t0_start)/CLOCKS_PER_SEC;
+            //cout << t0_clc << endl;
+            if(t0_clc>t0)
+            {
+                cout << "connect timeout " << endl;
+                emit ConnectRet(0,IP,Port);
+                return false;
+            }
+            emit ConnectRet(2,IP,Port);
+        }
+        else
+        {
+            //连接成功
+            emit ConnectRet(1,IP,Port);
+            return true;
+        }
+    }
+
+}
+
+bool Session::InitSession(Client *&client)
+{
+    client_session = client;
+    cout << "-----------"<< __FUNCTION__ <<"-----------------" << endl;
+    SendFrame = new Frame('U');
+    cout << "is_setFrame: " << SendFrame->SetinitFrame() << endl;
+    updata_recv_edit(0,SendFrame->GetAPDU());
+    this->FrameSend(client_session,*SendFrame);
+    //this->FrameRecv(client_session,*RecvFrame);
+    cout << "---------------------------------" << endl;
+    return true;
+}
+
+bool Session::InitSessionSuccess(Client *client)
+{
+    //clock_t start = clock();
+    unsigned char recvBuff[BUF_LEN];
+    bool sure = true;
+    bool init1 = false;
+    bool init2 = false;
+    int count = 0;
+    while(sure)
+    {
+        //if((double)(clock()-start)/CLOCKS_PER_SEC  > 6.0){cout << "Inint timeout!!!" <<endl; break;}
+        //消息接收
+        //int n = recv(client->get_socket(),(char*)recvBuff,BUF_LEN,0);
+        int n = FrameRecv(client,recvBuff);
+        if(n == -1){continue;}
+        //client->readtoBuf(&recvBuff,BUF_LEN);
+        //client->read()
+        if(n>1)
+        {
+            int len = recvBuff[1]+2;
+            cout<<"recv:";
+            //cout <<recvBuff<< endl;
+            show_hex((char*)recvBuff,len);
+            updata_recv_edit(1,recvBuff);
+            if(count == 0 && !init1)
+            {
+                // 68 04 0b 00 00 00
+                unsigned char C[4] = {0x0b,0x00,0x00,0x00};
+                sure = EncodeBuff(recvBuff,4,C);
+                init1 = true;
+                if(sure&&init1)count ++;
+                {
+                    cout << "init first package, count = "<< count << ";" << endl;
+                }
+            }
+            else if(count == 1&& !init2)
+            {
+                //0x68,0x0e,0x00,0x00,0x00,0x00,0x46,0x01,0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x02
+                unsigned char C[4] = {0x00,0x00,0x00,0x00};
+                unsigned char COT[2] = {0x04,0x00};//传送原因 COT = 4
+                unsigned char ASDU_addr[2] = {0x00,0x00};
+                unsigned char obj_addr[3] = {0x00,0x00,0x00};
+                //标识类型 TI = 0x46 可变帧长限定词 VSQ  = 0x01
+                sure = EncodeBuff(recvBuff,0x0e,C,0x46,0x01,COT,ASDU_addr,obj_addr,0x14);
+                if(!(recvBuff[15] != 0x00 ||recvBuff[15] != 0x01||recvBuff[15] != 0x02)){cout << "10" << endl;sure=false;}
+                init2 = true;
+                if(sure&&init1)
+                {
+                    count ++;
+                    cout << "init second package, count = "<< count << ";" << endl;
+                }
+
+            }
+            if(count == 2)
+            {
+                cout << "Init success!!!!" << endl;
+                emit UpdataDebugEdit(QString("Init success!!!!"));
+                isInit = true;
+                return isInit;
+            }
+
+        }
+//        else
+//        {
+//            Sleep(3000);
+//            cout << "wait package ing....." << endl;
+//        }
+
+    }
+    isInit = false;
+    cout << "Init fail!!!!" << endl;
+    emit UpdataDebugEdit(QString("Init fail!!!!"));
+    return sure;
+}
+
+bool Session::TotalCallSession(Client *&client)
+{
+    cout << "-----------"<< __FUNCTION__ <<"-----------------" << endl;
+    SendFrame = new Frame('I');
+    cout << "is_setFrame: " << SendFrame->SetTotalCall() << endl;
+    updata_recv_edit(0,SendFrame->GetAPDU());
+    this->FrameSend(client,*SendFrame);
+    cout << "---------------------------------" << endl;
+    return true;
+}
+
+bool Session::TotalCallSessionSuccess(Client *client)
+{
+    cout << "******************" <<__FUNCTION__ << "******************" << endl;
+    unsigned char recvBuff[BUF_LEN];
+    bool sure = true;
+    int count = -1;
+    bool Confirm = false;
+    while(sure)
+    {
+        cout << endl;
+        //消息接收
+        //int n = recv(client->get_socket(),(char*)recvBuff,BUF_LEN,0);
+        int n = FrameRecv(client,recvBuff);
+        if(n == -1){continue;}
+        if(n>1)
+        {
+            int len = recvBuff[1]+2;
+            cout<<"recv:";
+            show_hex((char*)recvBuff,len);
+            //0x68,0x0E,0x00,0x00,0x00,0x00,0x64,0x01,0x07,0x00,0x01,0x00,0x00,0x00,0x00,0x14  ->  激活确认
+            updata_recv_edit(1,recvBuff);
+            if(count < 0)
+            {
+                unsigned char C[4] = {0x00,0x00,0x00,0x00};
+                unsigned char COT[2] = {0x07,0x00};//传送原因 COT = 7
+                unsigned char ASDU_addr[2] = {0x01,0x00};
+                unsigned char obj_addr[3] = {0x00,0x00,0x00};
+                //标识类型 TI = 0x64 可变帧长限定词 VSQ  = 0x01 召唤限定词 QOI = 0x14
+                unsigned char len = recvBuff[1];
+                sure = EncodeBuff(recvBuff,len,C,0x64,0x01,COT,ASDU_addr,obj_addr,0x14);
+                Confirm = true;
+                if(sure && Confirm)
+                {
+                    count ++;
+                    cout << "init zero package, count = "<< count << ";" << endl;
+                    cout << "Init TC success!!!!" << endl;
+
+                    emit UpdataDebugEdit(QString("Init TC success!!!!"));
+                }
+            }
+            else if(count >= 0)
+            {
+                // 68 12 00 00 00 00 0D 81 14 00 01 00 01 40 00 3F 7B 29 A7 00
+                //0x68,0x4D,0x00,0x00,0x00,0x00,0x0D,0x84,0x14,0x00,0x01,0x00,0x01,0x40,0x00,0xff,0xFF
+                unsigned char C[4] = {0x00,0x00,0x00,0x00};
+                unsigned char T1 = recvBuff[6];
+                if(T1 != 0x64)  // 如果不是召唤结束帧
+                {
+                    if(T1 == 0x09)
+                    {
+                        printf("T1 = %02x,recvBuff[6] = %02x\n",T1,recvBuff[6]);
+                    }
+                    else if(T1 == 0x0B)
+                    {
+                        printf("T1 = %02x,recvBuff[6] = %02x\n",T1,recvBuff[6]);
+                    }
+                    else if(T1 == 0x0D)
+                    {
+                        printf("T1 = %02x,recvBuff[6] = %02x\n",T1,recvBuff[6]);
+                    }
+                    else
+                    {
+                        emit UpdataDebugEdit(QString("package data of T1 error!!!!"));
+                        return false;
+                    }
+                    unsigned char VSQ = recvBuff[7];
+                    unsigned char COT[2] = {0x14,0x00};//传送原因 COT = 20
+                    unsigned char ASDU_addr[2] = {0x01,0x00};
+                    unsigned char obj_addr[3];
+                    my_strncpy(obj_addr,recvBuff+12,3);
+                    //标识类型 TI = 0x64 可变帧长限定词 VSQ  = 0x01 召唤限定词 QOI = 0x14
+                    unsigned char len = recvBuff[1];
+                    printf("len = %02x,recvBuff[1] =%02x\n",len,recvBuff[1]);
+                    sure = EncodeBuff(recvBuff,len,C,T1,VSQ,COT,ASDU_addr,obj_addr);
+                    if(sure==true)
+                    {
+                        count ++;
+                        cout << "totalcall recv "<< count-1 <<" package, count = "<< count << ";" << endl;
+                    }
+                }
+                else  // 如果是召唤结束帧
+                {
+                     unsigned char C[4] = {0x00,0x00,0x00,0x00};
+                     unsigned char COT[2] = {0x0a,0x00};//传送原因 COT = 10
+                     unsigned char ASDU_addr[2] = {0x01,0x00};
+                     unsigned char obj_addr[3] = {0x00,0x00,0x00};
+                     //标识类型 TI = 0x64 可变帧长限定词 VSQ  = 0x01 召唤限定词 QOI = 0x14
+                     unsigned char len = recvBuff[1];
+                     sure = EncodeBuff(recvBuff,len,C,0x64,0x01,COT,ASDU_addr,obj_addr,0x14);
+                     if(sure)
+                     {
+                         cout << "totalcall end" << endl;
+                         emit UpdataDebugEdit(QString("TotalCall End!!!!"));
+                         cout << "************************************" << endl;
+                         return sure;
+                     }
+                }
+            }
+        }
+        cout << endl;
+    }
+    cout << "recv error!!!"<< "package error: " <<count << endl;
+    emit UpdataDebugEdit(QString("TotalCall Recv Error!!!!!!!"));
+    cout << "************************************" << endl;
+    return true;
+}
+
+Frame Session::ClockSynSession(Client *client)
+{
+    cout << "-----------"<< __FUNCTION__ <<"-----------------" << endl;
+    SendFrame = new Frame('I');
+    cout << "is_setFrame: " << SendFrame->SetClockSyn() << endl;
+    updata_recv_edit(0,SendFrame->GetAPDU());
+    //show_hex((char*)(GetSendFrame().GetAPDU()),GetSendFrame().GetAPDU()[1]+2);
+    this->FrameSend(client,*SendFrame);
+    cout << "---------------------------------" << endl;
+    return *SendFrame;
+}
+
+bool Session::ClockSynSessionSuccess(Client *client, Frame &Frame)
+{
+    cout << "******************" <<__FUNCTION__ << "******************" << endl;
+    unsigned char recvBuff[BUF_LEN];
+    bool sure = true;
+    bool Confirm = false;
+    while(sure)
+    {
+        cout << endl;
+        //消息接收
+        //int n = recv(client->get_socket(),(char*)recvBuff,BUF_LEN,0);
+        int n = FrameRecv(client,recvBuff);
+        if(n == -1){continue;}
+        if(n>1)
+        {
+            //68 14 00 00 00 00 67 01 07 00 01 00 00 00 00 ---> 0~14
+            //0x01 0x02 0x03 0x04 0x81 0x09 0x10    --->15~21
+            int len = recvBuff[1]+2;
+            cout<<"recv:";
+            show_hex((char*)recvBuff,len);
+            updata_recv_edit(1,recvBuff);
+//            cout << "Frame: ";
+//            show_hex((char*)(GetSendFrame().GetAPDU()),GetSendFrame().GetAPDU()[1]+2);
+//            cout << endl;
+            unsigned char C[4] = {0x00,0x00,0x00,0x00};
+            unsigned char COT[2] = {0x07,0x00};//传送原因 COT = 7
+            unsigned char ASDU_addr[2] = {0x01,0x00};
+            unsigned char obj_addr[3] = {0x00,0x00,0x00};
+            //标识类型 TI = 0x64 可变帧长限定词 VSQ  = 0x01 召唤限定词 QOI = 0x14
+            unsigned char size = recvBuff[1];
+            sure = EncodeBuff(recvBuff,size,C,C_CS_NA_1,0x01,COT,ASDU_addr,obj_addr);
+            char recvTime[7] = {0};
+            char sendTime[7] = {0};
+            for(int i=0;i<7;i++)
+            {
+                sendTime[i] = *(Frame.GetAPDU()+15+i);
+                recvTime[i] = *(recvBuff+15+i);
+            }
+            show_hex(sendTime,7);
+            show_hex(recvTime,7);
+            if(strncmp(recvTime,sendTime,7) != 0)
+            {
+                cout << "ClockSyn fali" << endl;
+                emit UpdataDebugEdit(QString("ClockSyn fali!!!!"));
+                sure = false;
+            }
+            Confirm = true;
+            if(sure && Confirm)
+            {
+                cout << "ClockSyn success!!!!" << endl;
+                emit UpdataDebugEdit(QString("ClockSyn success!!!!"));
+                return sure && Confirm;
+            }
+        }
+    }
+    cout << "************************************" << endl;
+    return sure;
+}
+
+bool Session::ClockReadSession(Client *client)
+{
+    cout << "-----------"<< __FUNCTION__ <<"-----------------" << endl;
+    SendFrame = new Frame('I');
+    cout << "is_setFrame: " << SendFrame->SetClockRead() << endl;
+    updata_recv_edit(0,SendFrame->GetAPDU());
+    //show_hex((char*)(GetSendFrame().GetAPDU()),GetSendFrame().GetAPDU()[1]+2);
+    this->FrameSend(client,*SendFrame);
+    cout << "---------------------------------" << endl;
+    return true;
+}
+
+bool Session::ClockReadSessionSuccess(Client *client)
+{
+    cout << "******************" <<__FUNCTION__ << "******************" << endl;
+    unsigned char recvBuff[BUF_LEN];
+    bool sure = true;
+    bool Confirm = false;
+    while(sure)
+    {
+        cout << endl;
+        //消息接收
+        //int n = recv(client->get_socket(),(char*)recvBuff,BUF_LEN,0);
+        int n = FrameRecv(client,recvBuff);
+        if(n == -1){continue;}
+        if(n>1)
+        {
+            //68 14 00 00 00 00 67 01 05 00 01 00 00 00 00 ---> 0~14
+            //0x00 0x00 0x00 0x00 0x00 0x00 0x00    --->15~21
+            int len = recvBuff[1]+2;
+            cout<<"recv:";
+            updata_recv_edit(1,recvBuff);
+            show_hex((char*)recvBuff,len);
+            unsigned char C[4] = {0x00,0x00,0x00,0x00};
+            unsigned char COT[2] = {0x07,0x00};//传送原因 COT = 7
+            unsigned char ASDU_addr[2] = {0x01,0x00};
+            unsigned char obj_addr[3] = {0x00,0x00,0x00};
+            //标识类型 TI = 0x64 可变帧长限定词 VSQ  = 0x01 召唤限定词 QOI = 0x14
+            unsigned char size = recvBuff[1];
+            sure = EncodeBuff(recvBuff,size,C,C_CS_NA_1,0x01,COT,ASDU_addr,obj_addr);
+            char recvTime[7] = {0};
+            char Time[7] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+            for(int i=0;i<7;i++)
+            {
+                recvTime[i] = *(recvBuff+15+i);
+            }
+            show_hex(recvTime,7);
+
+            if(strncmp(recvTime,Time,7) == 0)
+            {
+                cout << "ClockRead fali" << endl;
+                emit UpdataDebugEdit(QString("ClockRead fali!!!!"));
+                sure = false;
+            }
+            Confirm = true;
+            if(sure && Confirm)
+            {
+                cout << "ClockRead success!!!!" << endl;
+                emit UpdataDebugEdit(QString("ClockRead success!!!!"));
+                return sure && Confirm;
+            }
+        }
+    }
+    cout << "************************************" << endl;
+    return sure;
+}
+
+bool Session::ResetSession(Client *client)
+{
+    cout << "-----------"<< __FUNCTION__ <<"-----------------" << endl;
+    SendFrame = new Frame('I');
+    cout << "is_setFrame: " << SendFrame->SetReset() << endl;
+    updata_recv_edit(0,SendFrame->GetAPDU());
+    //show_hex((char*)(GetSendFrame().GetAPDU()),GetSendFrame().GetAPDU()[1]+2);
+    this->FrameSend(client,*SendFrame);
+    cout << "---------------------------------" << endl;
+    return true;
+}
+
+bool Session::ResetSessionSuccess(Client *client)
+{
+    cout << "******************" <<__FUNCTION__ << "******************" << endl;
+    unsigned char recvBuff[BUF_LEN];
+    bool sure = true;
+    bool Confirm = false;
+    while(sure)
+    {
+        cout << endl;
+        //消息接收
+        //int n = recv(client->get_socket(),(char*)recvBuff,BUF_LEN,0);
+        int n = FrameRecv(client,recvBuff);
+        if(n == -1){continue;}
+        if(n>1)
+        {
+            // 68 0e 00 00 00 00 69 01 06 00 01 00 00 00 00 01
+            // 0x68 0x0e 0x00 0x00 0x00 0x00
+            // 0x69 0x01 0x07 0x00 0x01 0x00 0x00 0x00 0x00 0x01
+            // T1 = C_RP_NA_1(105) 复位进程命令
+            int len = recvBuff[1]+2;
+            cout<<"recv:";
+            updata_recv_edit(1,recvBuff);
+            show_hex((char*)recvBuff,len);
+            unsigned char C[4] = {0x00,0x00,0x00,0x00};
+            unsigned char COT[2] = {0x07,0x00};//传送原因 COT = 7
+            unsigned char ASDU_addr[2] = {0x01,0x00};
+            unsigned char obj_addr[3] = {0x00,0x00,0x00};
+            //标识类型 TI = 0x69 可变帧长限定词 VSQ  = 0x01 召唤限定词 QRP = 0x01
+            unsigned char size = recvBuff[1];
+            unsigned char QRP = 0x01;
+            sure = EncodeBuff(recvBuff,size,C,C_RP_NA_1,0x01,COT,ASDU_addr,obj_addr,QRP);
+            Confirm = true;
+            if(sure && Confirm)
+            {
+                cout << "Reset success!!!!" << endl;
+
+                emit UpdataDebugEdit(QString("Reset success!!!!"));
+                return sure && Confirm;
+            }
+        }
+    }
+    cout << "Reset fail !!!!" << endl;
+    emit UpdataDebugEdit(QString("Reset fail!!!!"));
+    return sure && Confirm;
+    cout << "************************************" << endl;
+    return sure;
+}
+
+bool Session::DirCallSession(Client *client,char* DirName)
+{
+    cout << "-----------"<< __FUNCTION__ <<"-----------------" << endl;
+    SendFrame = new Frame('I');
+    cout << "is_setFrame: " << SendFrame->SetDirCall(DirName) << endl;
+    updata_recv_edit(0,SendFrame->GetAPDU());
+    //show_hex((char*)(GetSendFrame().GetAPDU()),GetSendFrame().GetAPDU()[1]+2);
+    this->FrameSend(client,*SendFrame);
+    cout << "---------------------------------" << endl;
+    return true;
+}
+
+bool Session::DirCallSessionSuccess(Client *client)
+{
+    cout << "******************" <<__FUNCTION__ << "******************" << endl;
+    unsigned char recvBuff[BUF_LEN];
+    bool sure = true;
+    bool follow = true;
+    while(sure)
+    {
+        /*
+        68 27 00 00 00 00
+        d2 00
+        07 00
+        01 00
+        00 00 00   -> 0~14
+
+        02          ->15
+        02 00
+        00 00 00 00
+        01 01 04
+        63 6f 64 65     -> x = 0x04(变量)
+        00
+        00 00 0f ff
+        00 00 00 00 00 00 00
+        */
+        cout << endl;
+        //消息接收
+        //int n = recv(client->get_socket(),(char*)recvBuff,BUF_LEN,0);
+        int n = FrameRecv(client,recvBuff);
+        if(n == -1){continue;}
+        if(n>1)
+        {
+            updata_recv_edit(1,recvBuff);
+            int len = recvBuff[1]+2;
+            cout<<"recv:";
+            show_hex((char*)recvBuff,len);
+            unsigned char C[4] = {0x0b,0x00,0x00,0x0f};   //----->这里一般是 0x00 0x00 0x00 0x00
+            //标识类型 TI = 0xD2 可变帧长限定词 VSQ  = 0x00
+            unsigned char T1 = F_FR_NA_1;
+            unsigned char VSQ  = 0x00;
+            unsigned char COT[2] = {0x07,0x00};//传送原因 COT = 7
+            unsigned char ASDU_addr[2] = {0x01,0x00};
+            unsigned char obj_addr[3] = {0x00,0x00,0x00};
+            unsigned char size = recvBuff[1];
+            sure = EncodeBuff(recvBuff,size,C,T1,VSQ,COT,ASDU_addr,obj_addr);// 没有限定词，一般判断0~14
+            if(recvBuff[15] != 0x02)
+            {
+                cout << "The additional packet type is not 0x02" << endl;
+                emit UpdataDebugEdit(QString("The additional packet type is not 0x02"));
+                sure = false;
+            }
+            if(recvBuff[16] != 0x02){
+                sure = false;
+                cout << "DirCall fail" << endl;
+                emit UpdataDebugEdit(QString("DirCall fail"));
+                return sure;
+            }
+            if(recvBuff[17] != 0x00){
+                sure = false;
+                cout << "DirCall fail" << endl;
+                emit UpdataDebugEdit(QString("DirCall fail"));
+                return sure;
+            }
+            char DirID[4] = {0};
+            my_strncpy(DirID,recvBuff+18,4);
+            if(recvBuff[22] == 0x00){
+                cout << "DirCall success,No follow-up" << endl;
+                follow = false;
+                emit UpdataDebugEdit(QString("DirCall success,No follow-up"));
+                return sure;
+            }
+            else if(recvBuff[22] == 0x01)
+            {
+                int filecount = recvBuff[23];
+                File *fileArray = new File[filecount];
+                printf("\nfilecount: %d\n\n----start read DIR ----\n",filecount);
+
+                for(int i=0 , j = 0;i<filecount;i++)
+                {
+                    //cout << "i = " << i <<endl;
+                   //如果个数不对就是这有问题，char转int
+                    int NameSize = recvBuff[24+j];
+                    char *FileName = new char[NameSize];
+                    j = j+1;
+                    my_strncpy(FileName,recvBuff+(24+j),NameSize);
+                    //printf("fileNameSize: %02x\n" , NameSize);
+                    cout << "filename: ";
+                    show_str(FileName,NameSize);
+                    //show_hex(FileName,NameSize);
+                    j = j+NameSize;
+                    char property = recvBuff[24+j];
+                    //printf("property: %02x\n" , property);
+                    char *FileSize = new char[4];
+                    j = j+1;
+                    my_strncpy(FileSize,recvBuff+(24+j),4);
+                    char *Time = new char[7];
+                    j = j+4;
+                    my_strncpy(Time,recvBuff+(24+j),7);
+                    fileArray[i].setNameSize(NameSize);
+                    fileArray[i].setFileName(FileName);
+                    fileArray[i].setFileProperty(property);
+                    fileArray[i].setFileSize(FileSize);
+                    fileArray[i].setFileTime(Time);
+                    j = j+7;
+                    cout << endl;
+                    emit show_dirname(FileName,NameSize);
+                }
+                printf("----end read DIR, %d file ----\n",filecount);
+            }
+            else
+            {
+                cout << "follow-up flage error" << endl;
+                emit UpdataDebugEdit(QString("follow-up flage error"));
+                sure = false;
+            }
+            if(sure && follow)
+            {
+                cout << "DirCall success!!!!" << endl;
+                emit UpdataDebugEdit(QString("DirCall success!!!!,have follow-up...."));
+                //return sure && Confirm;
+            }
+        }
+    }
+    cout << "DirCall fail !!!!" << endl;
+    emit UpdataDebugEdit(QString("DirCall fail!!!!"));
+    cout << "************************************" << endl;
+    return sure;
+}
+
+bool Session::ReadFileSession(Client *client, char *RFileName)
+{
+    emit ReadLabelEnable(0);
+    cout << "-----------"<< __FUNCTION__ <<"-----------------" << endl;
+    SendFrame = new Frame('I');
+    cout << "is_setFrame: " << SendFrame->SetReadFile(RFileName) << endl;
+    updata_recv_edit(0,SendFrame->GetAPDU());
+    //show_hex((char*)(GetSendFrame().GetAPDU()),GetSendFrame().GetAPDU()[1]+2);
+    this->FrameSend(client,*SendFrame);
+    cout << "---------------------------------" << endl;
+    return true;
+}
+
+bool Session::ReadFileSessionSuccess(Client *client,QString DirName)
+{
+    cout << "******************" <<__FUNCTION__ << "******************" << endl;
+    unsigned char recvBuff[BUF_LEN];
+
+    bool sure = true;
+    bool Enable = false;
+    int pack_count = 1;
+    FileOperation *fileop;
+    fileop = new FileOperation();
+    while(sure)
+    {
+        /* 读文件激活确认
+        68 20 00 00 00 00		->APCI
+
+        D2 00  ->T1 = F_FR_NA_1(210)
+        07 00  ->  COT
+        01 00  -> ASDU_addr
+        00 00 00 -->obj_addr
+
+        02  ->附加数据包类型(2:文件传输)  ->15
+        04 	->读文件激活确认
+        00	-> 结果： 0成功，1失败
+        06  ->文件名长度                 -> 18
+
+        name[x] = {}	->文件完整名(不带结束符) 00 00 00 00 00 00
+        00 00 00 00     ->文件ID
+        00 00 00 00     ->文件大小
+        */
+
+        /*读文件数据传输
+        68 20 00 00 00 00		->APCI
+
+        D2 00  ->T1 = F_FR_NA_1(210)
+        06 00  ->  COT
+        01 00  -> ASDU_addr
+        00 00 00 -->obj_addr
+
+        02  ->附加数据包类型(2:文件传输)  ->15
+        04 	->读文件激活确认
+        00 00 00 00     ->文件ID
+        00 00 00 00     ->数据段号(文件内容的偏移指针值)
+        00              ->后续标志(0:无后续，1有后续)
+        filedata[x]     ->文件数据  x = recv[1]-25
+        00              ->校验码
+        */
+
+        cout << endl;
+        //消息接收
+        memset(recvBuff,0,256);
+        //int n = recv(client->get_socket(),(char*)recvBuff,BUF_LEN,0);
+        int n = FrameRecv(client,recvBuff);
+        if(n == -1){continue;}
+        if(n>1)
+        {
+            updata_recv_edit(1,recvBuff);
+            if(!Enable) //激活确认判断
+            {
+                int len = recvBuff[1]+2;
+                cout<<"recv:";
+                show_hex((char*)recvBuff,len);
+                unsigned char C[4] = {0x00,0x00,0x00,0x00};   //----->这里一般是 0x00 0x00 0x00 0x00
+                //标识类型 TI = 0xD2 可变帧长限定词 VSQ  = 0x00
+                unsigned char T1 = F_FR_NA_1;
+                unsigned char VSQ  = 0x00;
+                unsigned char COT[2] = {0x07,0x00};//传送原因 COT = 7
+                unsigned char ASDU_addr[2] = {0x01,0x00};
+                unsigned char obj_addr[3] = {0x00,0x00,0x00};
+                unsigned char size = recvBuff[1];
+                sure = EncodeBuff(recvBuff,size,C,T1,VSQ,COT,ASDU_addr,obj_addr);// 没有限定词，一般判断0~14,C在函数为用上
+                if(!sure){cout << "ReadFile Enable fail" << endl;}
+                if(recvBuff[15] != 0x02)
+                {
+                    cout << "The additional packet type is not 0x02" << endl;
+                    emit UpdataDebugEdit(QString("The additional packet type is not 0x02"));
+                    sure = false;
+                    return sure;
+                }
+                //4：读文件激活确认
+                if(recvBuff[16] != 0x04){
+                    cout << "ReadFile Enable fail" << endl;
+                    emit UpdataDebugEdit(QString("ReadFile Enable fail"));
+                    sure = false;
+                    return sure;
+                }
+                if(recvBuff[17] != 0x00){
+                    cout << "ReadFile Enable fail" << endl;
+                    emit UpdataDebugEdit(QString("ReadFile Enable fail"));
+                    sure = false;
+                    return sure;
+                }
+                else
+                {
+
+                    int namesize = recvBuff[18];
+                    fileop->setNameSize(namesize);  //文件名长度
+                    char *Filename = new char[len];
+                    my_strncpy(Filename,recvBuff+19,namesize);
+                    fileop->setFileName(Filename);  // 文件名
+                    char *FileID = new char[4];
+                    my_strncpy(FileID,recvBuff+19+namesize,4);
+                    fileop->setFileID(FileID);      //文件ID
+                    char *FileSize = new char[4];
+                    my_strncpy(FileSize,recvBuff+19+namesize+4,4);
+                    fileop->setFileOpSize(FileSize);      //文件大小
+                    cout << "ReadFile Enable success" << endl;
+                    Enable = true;
+                    emit ReadMax(fileop->getIntFileSize());
+                    emit ReadLabelEnable(1);
+                    emit UpdataDebugEdit(QString("ReadFile Enable success"));
+                    if(Enable == false) return Enable;
+                }
+            }
+            else    //进行文件传输
+            {
+                int len = recvBuff[1]+2;
+                cout<<"recv:";
+                show_hex((char*)recvBuff,len);
+                unsigned char C[4] = {0x00,0x00,0x00,0x00};   //----->这里一般是 0x00 0x00 0x00 0x00
+                //标识类型 TI = 0xD2 可变帧长限定词 VSQ  = 0x00
+                unsigned char T1 = F_FR_NA_1;
+                unsigned char VSQ  = 0x00;
+                unsigned char COT[2] = {0x05,0x00};//传送原因 COT = 7
+                unsigned char ASDU_addr[2] = {0x01,0x00};
+                unsigned char obj_addr[3] = {0x00,0x00,0x00};
+                unsigned char size = recvBuff[1];
+                sure = EncodeBuff(recvBuff,size,C,T1,VSQ,COT,ASDU_addr,obj_addr);// 没有限定词，一般判断0~14,C在函数为用上
+                if(recvBuff[15] != 0x02)
+                {
+                    cout << "The additional packet type is not 0x02" << endl;
+                    emit UpdataDebugEdit(QString("The additional packet type is not 0x02"));
+                    sure = false;
+                }
+                if(recvBuff[16] != 0x05){sure = false;}     //5：读文件数据
+                else
+                {
+                    //文件ID校验
+//                    char *FileID = new char[4];
+//                    my_strncpy(FileID,recvBuff+17,4);
+                    char *FileOffset = new char[4];
+                    my_strncpy(FileOffset,recvBuff+17+4,4);
+                    cout << "FileOffset: ";
+                    show_hex(FileOffset,4);
+                    cout << "file recving..." << endl;
+                    fileop->setFileOffset(FileOffset);
+                    int data_len = recvBuff[1]-25;
+                    char *data = new char[data_len];
+                    my_strncpy(data,recvBuff+26,data_len);
+                    cout << "filedata: " << endl;
+                    //show_hex(data,data_len);
+                    char crc = recvBuff[26+data_len];
+                    cout << "CRC: ";
+                    show_hex(&crc,1);
+                    fileop->setCRC(crc);
+                    if(crc == 0x04)
+                    {
+                        cout << "recv success , this " << pack_count++ << " data package" << endl;
+                        fileop->setFileDate(data,DirName.toUtf8().data());
+                        emit ReadValue(fileop->getIntOffset(fileop->getFileOffset()));
+                    }
+                    else
+                    {
+                        cout << "recv fail" << endl;
+                        emit UpdataDebugEdit(QString("read file recv fail!!!!"));
+                        return false;
+                    }
+
+                    if(recvBuff[17+4+4] == 0x00){
+                        cout << "file recv ,but no follow-up" << endl;
+                        cout << "fileSize :" << fileop->getIntFileSize() << endl;
+                        emit UpdataDebugEdit(QString("Readfile success!!!!"));
+                        emit ReadLabelEnable(2);
+                        return true;
+                    }
+//                    else if(recvBuff[17+4+4] == 0x01)
+//                    {
+
+//                    }
+                }
+            }
+        }
+    }
+    cout << "Readfile fail" << endl;
+    emit UpdataDebugEdit(QString("Readfile fail!!!!"));
+    return sure;
+}
+
+Frame Session::WriteFileSession(Client *client, char *WFileName)
+{
+    emit WriteLabelEnable(0);
+    cout << "-----------"<< __FUNCTION__ <<"-----------------" << endl;
+    SendFrame = new Frame('I');
+    cout << "is_setFrame: " << SendFrame->SetWriteFile(WFileName) << endl;
+    updata_recv_edit(0,SendFrame->GetAPDU());
+    //show_hex((char*)(GetSendFrame().GetAPDU()),GetSendFrame().GetAPDU()[1]+2);
+    this->FrameSend(client,*SendFrame);
+    cout << "---------------------------------" << endl;
+    return *SendFrame;
+}
+
+//写文件激活判定
+bool Session::WriteFileSessionEnable(Client *client, Frame &frame)
+{
+    cout << "******************" <<__FUNCTION__ << "******************" << endl;
+    unsigned char recvBuff[BUF_LEN];
+
+    bool sure = true;
+    bool Enable = false;
+    wfileop = new FileOperation();
+    char *per_send;
+    cout << frame.Getlen() << endl;
+    per_send = new char[frame.Getlen()];
+    my_strncpy(per_send,frame.GetAPDU(),frame.Getlen());
+    while(sure)
+    {
+        /* 写文件激活确认
+        68 20 00 00 00 00		->APCI
+
+        D2 00  ->T1 = F_FR_NA_1(210)
+        07 00  ->  COT
+        01 00  -> ASDU_addr
+        00 00 00 -->obj_addr
+
+        02  ->附加数据包类型(2:文件传输)  ->15
+        08 	->写文件激活确认
+        00	-> 结果描述字： 0：成功 1：未知错误 2. 文件名不支持 3：长度超范围
+        06  ->文件名长度                 -> 18
+
+        name[x] = {}	->文件完整名(不带结束符) 00 00 00 00 00 00
+        00 00 00 00     ->文件ID
+        00 00 00 00     ->文件大小
+        */
+
+        /*读文件数据传输
+        68 20 00 00 00 00		->APCI
+
+        D2 00  ->T1 = F_FR_NA_1(210)
+        06 00  ->  COT
+        01 00  -> ASDU_addr
+        00 00 00 -->obj_addr
+
+        02  ->附加数据包类型(2:文件传输)  ->15
+        04 	->读文件激活确认
+        00 00 00 00     ->文件ID
+        00 00 00 00     ->数据段号(文件内容的偏移指针值)
+        00              ->后续标志(0:无后续，1有后续)
+        filedata[x]     ->文件数据  x = recv[1]-25
+        00              ->校验码
+        */
+
+        cout << endl;
+        //消息接收
+        memset(recvBuff,0,256);
+        //int n = recv(client->get_socket(),(char*)recvBuff,BUF_LEN,0);
+        int n = FrameRecv(client,recvBuff);
+        if(n == -1){continue;}
+        if(n>1)
+        {
+            updata_recv_edit(1,recvBuff);
+            if(!Enable) //激活确认判断
+            {
+                int len = recvBuff[1]+2;
+                cout<<"recv:";
+                show_hex((char*)recvBuff,len);
+                unsigned char C[4] = {0x00,0x00,0x00,0x00};   //----->这里一般是 0x00 0x00 0x00 0x00
+                //标识类型 TI = 0xD2 可变帧长限定词 VSQ  = 0x00
+                unsigned char T1 = F_FR_NA_1;
+                unsigned char VSQ  = 0x00;
+                unsigned char COT[2] = {0x07,0x00};//传送原因 COT = 7
+                unsigned char ASDU_addr[2] = {0x01,0x00};
+                unsigned char obj_addr[3] = {0x00,0x00,0x00};
+                unsigned char size = recvBuff[1];
+                sure = EncodeBuff(recvBuff,size,C,T1,VSQ,COT,ASDU_addr,obj_addr);// 没有限定词，一般判断0~14,C在函数为用上
+                if(!sure){cout << "WriteFile Enable fail" << endl;}
+                if(recvBuff[15] != 0x02)
+                {
+                    cout << "The additional packet type is not 0x02" << endl;
+                    emit UpdataDebugEdit(QString("The additional packet type is not 0x02"));
+                    sure = false;
+                    return sure;
+                }
+                //8：写文件激活确认
+                if(recvBuff[16] != 0x08){
+                    cout << "WriteFile Enable fail" << endl;
+                    emit UpdataDebugEdit(QString("WriteFile Enable fail"));
+                    sure = false;
+                    return sure;
+                }
+                if(recvBuff[17] != 0x00){
+                    if(recvBuff[17] != 0x01) // 1：未知错误
+                    {
+                        cout << "WriteFile Enable fail , unkonow error !!! " << endl;
+                        emit UpdataDebugEdit(QString("WriteFile Enable fail , unkonow error !!!"));
+                    }else if(recvBuff[17] != 0x02)  //2. 文件名不支持
+                    {
+                        cout << "WriteFile Enable fail , File names are not supported !!! " << endl;
+                        emit UpdataDebugEdit(QString("WriteFile Enable fail , File names are not supported !!!"));
+                    }else if(recvBuff[17] != 0x03)  //3：长度超范围
+                    {
+                        cout << "WriteFile Enable fail , Length out of range !!! " << endl;
+                        emit UpdataDebugEdit(QString("WriteFile Enable fail , Length out of range !!!"));
+                    }else
+                    {
+                        cout << "WriteFile Enable fail , retrun error !!! " << endl;
+                        emit UpdataDebugEdit(QString("WriteFile Enable fail , retrun error !!!"));
+                    }
+
+                    sure = false;
+                    return sure;
+                }
+                else
+                {
+
+                    int namesize = recvBuff[18];
+                    int per_namesize = *(per_send+17);
+                    wfileop->setNameSize(namesize);  //文件名长度
+                    char *Filename = new char[len];
+                    my_strncpy(Filename,recvBuff+19,namesize);
+
+                    char *per_Filename = new char[len];
+                    my_strncpy(per_Filename,per_send+18,per_namesize);
+                    if(strncmp(Filename,per_Filename,namesize))
+                    {
+                        emit UpdataDebugEdit(QString("WriteFile Enable fail,Filename error"));
+                        return Enable;
+                    }
+                    wfileop->setFileName(Filename);  // 文件名
+                    char *FileID = new char[4];
+                    my_strncpy(FileID,recvBuff+19+namesize,4);
+
+                    char *per_FileID = new char[4];
+                    my_strncpy(per_FileID,per_send+18+per_namesize,4);
+                    if(strncmp(FileID,per_FileID,4))
+                    {
+                        emit UpdataDebugEdit(QString("WriteFile Enable fail,FileID error"));
+                        return Enable;
+                    }
+
+                    wfileop->setFileID(FileID);      //文件ID
+                    char *FileSize = new char[4];
+                    my_strncpy(FileSize,recvBuff+19+namesize+4,4);
+
+                    char *per_FileSize = new char[4];
+
+                    my_strncpy(per_FileSize,per_send+18+per_namesize+4,4);
+                    if(strncmp(FileID,per_FileID,4))
+                    {
+                        emit UpdataDebugEdit(QString("WriteFile Enable fail,FileSize error"));
+                        return Enable;
+                    }
+
+                    wfileop->setFileOpSize(FileSize);      //文件大小
+                    cout << "WriteFile Enable success" << endl;
+                    Enable = true;
+                    if(Enable)
+                    {
+                        emit WriteMax(wfileop->getIntFileSize());
+                        emit WriteLabelEnable(1);
+                        emit UpdataDebugEdit(QString("WriteFile Enable success"));
+                        qDebug() << wfileop->getIntFileSize();
+                        return Enable;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool Session::WriteFileSessionConfirm(Client *client, Frame &frame, int offset)
+{
+    cout << "******************" <<__FUNCTION__ << "******************" << endl;
+    unsigned char recvBuff[BUF_LEN];
+    bool sure = true;
+    char *per_send;
+    cout << frame.Getlen() << endl;
+    per_send = new char[frame.Getlen()];
+    my_strncpy(per_send,frame.GetAPDU(),frame.Getlen());
+    while(sure)
+    {
+        /*
+            写文件激活确认
+            68 20 00 00 00 00		->APCI
+
+            D2 00  ->T1 = F_FR_NA_1(210)
+            05 00  ->  COT
+            01 00  -> ASDU_addr
+            00 00 00 -->obj_addr
+
+            02  ->附加数据包类型(2:文件传输)  ->15
+            0a 	->写文件数据 传输确认
+            00 00 00 00     ->文件ID
+            00 00 00 00     ->数据段号
+            00	-> 结果描述字： 0：成功 1：未知错误 2.校验和错误 3.文件长度不对应 4.文件 ID 与激活 ID 不一致
+
+        */
+        //68 20 00 00 00 00 D2 00 05 00 01 00 00 00 00 02 0a 00 00 00 00 00 00 00 00 00
+        cout << endl;
+        //消息接收
+        memset(recvBuff,0,256);
+        //int n = recv(client->get_socket(),(char*)recvBuff,BUF_LEN,0);
+        int n = FrameRecv(client,recvBuff);
+        if(n == -1){continue;}
+        if(n>1)
+        {
+            updata_recv_edit(1,recvBuff);
+            int len = recvBuff[1]+2;
+            cout<<"recv:";
+            show_hex((char*)recvBuff,len);
+            unsigned char C[4] = {0x00,0x00,0x00,0x00};   //----->这里一般是 0x00 0x00 0x00 0x00
+            //标识类型 TI = 0xD2 可变帧长限定词 VSQ  = 0x00
+            unsigned char T1 = F_FR_NA_1;
+            unsigned char VSQ  = 0x00;
+            unsigned char COT[2] = {0x05,0x00};//传送原因 COT = 7
+            unsigned char ASDU_addr[2] = {0x01,0x00};
+            unsigned char obj_addr[3] = {0x00,0x00,0x00};
+            unsigned char size = recvBuff[1];
+            sure = EncodeBuff(recvBuff,size,C,T1,VSQ,COT,ASDU_addr,obj_addr);// 没有限定词，一般判断0~14,C在函数为用上
+            if(!sure){cout << "WriteFile judge Confirm fail" << endl;}
+            if(recvBuff[15] != 0x02)
+            {
+                cout << "The additional packet type is not 0x02" << endl;
+                emit UpdataDebugEdit(QString("The additional packet type is not 0x02"));
+                sure = false;
+                return sure;
+            }
+            //8：写文件传输确认
+            if(recvBuff[16] != 0x0a){
+                cout << "WriteFile Confirm operate flag fail" << endl;
+                emit UpdataDebugEdit(QString("WriteFile Confirm operate flag fail"));
+                sure = false;
+                return sure;
+            }
+
+            int per_namesize = (unsigned char)per_send[17];
+            //文件ID
+            char *FileID = new char[4];
+            my_strncpy(FileID,recvBuff+17,4);
+
+            char *per_FileID = new char[4];
+            my_strncpy(per_FileID,per_send+18+per_namesize,4);
+            if(strncmp(FileID,per_FileID,4))
+            {
+                emit UpdataDebugEdit(QString("WriteFile Confirm fail,FileID error"));
+                sure = false;
+                return false;
+            }
+
+            //文件偏移量
+            char *FileOffset = new char[4];
+            my_strncpy(FileOffset,recvBuff+17+4,4);
+
+            union Date
+            {
+                int a;
+                char arr[4];
+            }offsetd;
+            offsetd.a = offset;
+
+            if(strncmp(FileOffset,offsetd.arr,4))
+            {
+                emit UpdataDebugEdit(QString("WriteFile Confirm fail,FileOffset error"));
+                sure = false;
+                return false;
+            }
+
+            cout << "WriteFile Confirm success" << endl;
+
+
+
+            if(recvBuff[25] != 0x00){
+                if(recvBuff[17] != 0x01) // 1：未知错误
+                {
+                    cout << "WriteFile Confirm fail , unkonow error !!! " << endl;
+                    emit UpdataDebugEdit(QString("WriteFile Confirm fail , unkonow error !!!"));
+                }else if(recvBuff[17] != 0x02)  //2. 校验和错误
+                {
+                    cout << "WriteFile Confirm fail , Checksum error !!! " << endl;
+                    emit UpdataDebugEdit(QString("WriteFile Confirm fail , Checksum error !!!"));
+                }else if(recvBuff[17] != 0x03)  //3：文件长度不对应
+                {
+                    cout << "WriteFile Confirm fail , The file length does not correspond !!! " << endl;
+                    emit UpdataDebugEdit(QString("WriteFile Confirm fail , The file length does not correspond !!!"));
+                }else if(recvBuff[17] != 0x04)  //4. 文件 ID 与激活 ID 不一致
+                {
+                    cout << "WriteFile Confirm fail , The file ID does not match the activation ID !!! " << endl;
+                    emit UpdataDebugEdit(QString("WriteFile Confirm fail , The file ID does not match the activation ID !!!"));
+                }
+                else
+                {
+                    cout << "WriteFile Confirm fail , retrun error !!! " << endl;
+                    emit UpdataDebugEdit(QString("WriteFile Confirm fail , retrun error !!!"));
+                }
+
+                sure = false;
+                return sure;
+            }else
+            {
+                    emit WriteLabelEnable(2);
+                    emit UpdataDebugEdit(QString("WriteFile Confirm success"));
+                    return sure;
+            }
+        }
+    }
+    return true;
+}
+
+bool Session::WriteFileSessionSuccess(Client *client, Frame &frame,QString filename)
+{
+    bool ret = WriteFileSessionEnable(client, frame);
+    if(ret)
+    {
+        // 写文件传输
+        QFile  f(filename);
+        int filesize= f.size();
+        int offset = 0;
+        emit UpdataDebugEdit(QString("WriteFile Transfering ....."));
+        while(filesize-offset)
+        {
+            SendFrame->SetWriteData(filename,offset);
+//            cout << filesize << endl;
+//            cout << offset << endl;
+            updata_recv_edit(0,SendFrame->GetAPDU());
+            Sleep(100);
+            this->FrameSend(client,*SendFrame);
+            emit WriteValue(offset);
+        }
+        emit UpdataDebugEdit(QString("WriteFile Transfer End"));
+        WriteFileSessionConfirm(client,frame,offset);
+    }
+    return true;
+}
+
+

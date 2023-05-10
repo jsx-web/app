@@ -10,12 +10,13 @@
 #include "client.h"
 #include "frame.h"
 #include "session.h"
-#include "readfiledialog.h"
+#include "dialog_showall.h"
 #include <QTableView>
 #include <QStandardItemModel>
 #include <QPropertyAnimation>
 #include <QMenu>
 #include <QAction>
+#include <QMovie>
 
 namespace Ui {
 class Widget;
@@ -34,7 +35,7 @@ friend class Session;
 
 private:
     Ui::Widget *ui;
-    ReadFileDialog *readDialog;
+    Dialog_ShowAll *dialog_showall;
     bool m_bSideflag;
     QPropertyAnimation *m_propertyAnimation;
     QButtonGroup *C_S_check;
@@ -44,6 +45,11 @@ private:
     QThread* thread;
     QStandardItemModel* model;
     QStandardItemModel* dir_model;
+    bool colorfalage;
+    QMovie *movie;
+
+private slots:
+    void slotconTimeout();
 
 //---------实现右键菜单------
 private:
@@ -51,8 +57,8 @@ private:
      QAction *actionShowAll;
      QAction *actionEncode;
      QAction *actionTag;
-public:
-    void MenuInit();
+signals:
+    void ShowAll(QString send, QString type, QString data);
 private slots:
     //右键菜单响应函数
     void slotContextMenu(QPoint pos);
@@ -62,10 +68,21 @@ private slots:
     void slotactionEncode();
     //标记此行
     void slotactionTag();
-//-------------------------
 
-public:
-    void ProgressBarIint();
+private slots:
+    //------测试帧响应判定---------
+    void slotTestConfirm();
+    void slotTestConfirmTimeOut();
+
+private slots:
+    //-----------接收框显示--------
+    void slotappendData(int author,char type,QString data);
+    //----------召唤目录显示--------
+    void slotshowDirname(char* name,int n);
+
+private slots:
+    //建立连接槽函数
+    void slotConnectRet(int status,QString IP,qint16 Port);
 private slots:
     //读文件进度条最大值设置
     void slotReadPorgressMax(int Max);
@@ -83,10 +100,13 @@ private slots:
     void slotUpdataDebugEidt(QString msg);
 
 public:
-    void on_Btn_Read_my_clicked(char* DirName = (char*)"iec104");
     void recvEidt_updata(char *data);
     void TablaViewInit();
-
+    void ProgressBarInit();
+    void WritePathInit();
+    void MenuInit();
+    void IconInit();
+    void BtnEnable();
 private slots:
     void on_Btn_Connect_clicked();
     void on_Btn_Close_clicked();
@@ -99,9 +119,10 @@ private slots:
     void on_Btn_Reset_clicked();
     void on_Btn_DirCall_clicked();
     void on_Btn_Read_clicked();
-    void EnablSuccess_res(bool ret,QString name);
     void on_Btn_FileTransfer_clicked();
     void on_Btn_DirSelect_clicked();
+    void on_Btn_Write_clicked();
+    void on_Btn_SelectFile_clicked();
 
 signals:
     void WidgetReadFile(bool end, char* packe_data);

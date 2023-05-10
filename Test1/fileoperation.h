@@ -14,11 +14,12 @@ private:
         unsigned char FileTime[7];
     */
     unsigned char FileID[4];
-    unsigned char FileOffsetPer[4];  //文件内容的偏移指针值前
-    unsigned char FileOffset[4];  //文件内容的偏移指针值后
-    unsigned char FollowFlage;  //后续标志
-    unsigned char *FileDate;    //文件数据
-    unsigned char CRC;         //校验码
+    unsigned char FileOffsetPer[4]; //文件内容的偏移指针值前
+    unsigned char FileOffset[4];    //文件内容的偏移指针值后
+    unsigned char WFileOffset[4];   //写文件的偏移值
+    unsigned char FollowFlage;      //后续标志
+    unsigned char *FileDate;        //文件数据
+    unsigned char CRC;              //校验码
     int FileOpFileSize(void* size); //存文件
     QDir *dir;
     QFile *file;
@@ -38,9 +39,12 @@ public:
     unsigned char getCRC();
     void setCRC(char crc);
     void setFileOpSize(void *size);
-    bool writeFile(char* Name = (char*)"data.txt",char* data = (char*)"hello",char *path = nullptr);
-    
+    void setWFileOffset(int wfileOffset);
+    unsigned char* getWFileOffset();
     int getIntOffset(void* offset);
+
+    bool writeFile(char* Name,char* data,char *path = nullptr);
+    static int readFile(QString filepath,int offset,char &continueflag,unsigned char **data,char &crc);
 };
 
 

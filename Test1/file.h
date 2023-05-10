@@ -27,6 +27,7 @@ public:
     unsigned char* getFileTime();
     void setFileTime(void* filetime);
     int getIntFileSize();
+    void fileopen(char *FileName);
 };
 
 

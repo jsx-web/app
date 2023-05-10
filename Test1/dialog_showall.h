@@ -17,6 +17,9 @@ public:
 
 private:
     Ui::Dialog_ShowAll *ui;
+
+private slots:
+    void ShowAll(QString send, QString type, QString data);
 };
 
 #endif // DIALOG_SHOWALL_H

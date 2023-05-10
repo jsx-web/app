@@ -1,0 +1,21 @@
+#include "readfiledialog.h"
+#include "ui_readfiledialog.h"
+
+ReadFileDialog::ReadFileDialog(QWidget *parent) :
+    QDialog(parent),
+    ui(new Ui::ReadFileDialog)
+{
+    ui->setupUi(this);
+}
+
+ReadFileDialog::~ReadFileDialog()
+{
+    delete ui;
+}
+
+void ReadFileDialog::on_Btn_Enable_clicked()
+{
+    bool ret = true;
+    QString filename = ui->FileName_Edit->text();
+    emit EnablSuccess(ret,filename);
+}

@@ -4,19 +4,20 @@
 #include <iostream>
 #include <string.h>
 #include <QDebug>
-#include <QTimer>
-#include<ctime>
 #include <QString>
 #include <QThread>
 #include <QObject>
 #include <QFile>
 #include <QDir>
 #include <windows.h>
+#include <QTimer>
+#include<ctime>
 
 using namespace std;
 
 //帧的最大容量
 #define BUF_LEN 256
+
 
 //I格式
 #define I_BIT_1 0x00
@@ -42,8 +43,20 @@ using namespace std;
 #define C_RP_NA_1 105   //复位进程命令
 #define F_FR_NA_1 210   //文件传输
 
-//
-#define PATH "D:/app/data/"  //默认文件存储目录
+//默认文件存储目录
+#define PATH "D:/app/data/"
+//写文件的目录
+#define WRITEPATH "D:/app/data/write/"
+//建立连接的超时
+#define CONNTIMEOUT 30
+//发送或测试 APDU 的超时
+#define TESTFRAMETIMEOUT 15
+//无数据报文时确认的超时，NOFRAMETIMEOUT<TESTFRAMETIMEOUT
+#define NOFRAMETIMEOUT 10
+//长期空闲状态下发送测试帧的超时
+#define FREETIMEOUT 20
+//测试帧发送间隔
+#define TESTTIME 25
 
 char* Uchar_to_char(char* &Dest,unsigned char* Src,int Size);
 void show_hex(char *buf , int len);

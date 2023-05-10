@@ -22,8 +22,6 @@ private slots:
 private:
     Ui::ReadFileDialog *ui;
     
-private slots:
-    void WidgetReadFile_res(bool end, char *pack_date);
 signals:
     void EnablSuccess(bool ret,QString name);
 };

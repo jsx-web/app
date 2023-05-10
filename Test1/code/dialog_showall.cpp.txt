@@ -1,0 +1,21 @@
+#include "dialog_showall.h"
+#include "ui_dialog_showall.h"
+
+Dialog_ShowAll::Dialog_ShowAll(QWidget *parent) :
+    QDialog(parent),
+    ui(new Ui::Dialog_ShowAll)
+{
+    ui->setupUi(this);
+}
+
+Dialog_ShowAll::~Dialog_ShowAll()
+{
+    delete ui;
+}
+
+void Dialog_ShowAll::ShowAll(QString send, QString type, QString data)
+{
+    ui->sender_label->setText(send);
+    ui->type_label->setText(type);
+    ui->show_textBrowser->setText(data);
+}

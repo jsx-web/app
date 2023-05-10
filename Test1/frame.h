@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include <iostream>
+#include <fileoperation.h>
 
 using namespace std;
 
@@ -25,6 +26,8 @@ public:
     int Getlen();
     char GerTpye();
 
+    bool setSFrame(int ACK);
+    bool setTestFrame();
     bool SetinitFrame();
     bool SetTotalCall();
     bool SetClockSyn();
@@ -33,6 +36,7 @@ public:
     bool SetDirCall(char* DirName,char CallFlage = 0x00,st_cp56time2a start = {.Time = 0x00000000000000},st_cp56time2a end = {.Time = 0x00000000000000});
     bool SetReadFile(char* FileName);
     bool SetWriteFile(char* FileName);
+    bool SetWriteData(QString filepath,int &offset);
 
 
 

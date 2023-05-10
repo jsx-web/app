@@ -8,6 +8,7 @@ QT       += core gui
 QT += network
 QT += concurrent
 QT += widgets
+QT += svg
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -55,3 +56,6 @@ FORMS += \
     dialog_showall.ui
 
 LIBS += -lpthread libwsock32 libws2_32
+
+RESOURCES += \
+    res.qrc

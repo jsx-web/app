@@ -1,0 +1,876 @@
+#include "widget.h"
+#include "ui_widget.h"
+#include <QDebug>
+#include "config.h"
+#include <QMessageBox>
+#include <QPainter>
+#include <QAbstractItemView>
+#include <QMenu>
+#include <QFileDialog>
+#include <QSvgRenderer>
+#include <QDesktopWidget>
+
+using namespace QtConcurrent;
+
+
+Widget::Widget(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::Widget)
+{
+    ui->setupUi(this);
+
+    C_S_check = new QButtonGroup();
+    C_S_check->addButton(ui->radioBtn_Server,0);
+    C_S_check->addButton(ui->radioBtn_Client,1);
+    isconnect = -1;
+    colorfalage = false;
+    session = new Session();
+    qRegisterMetaType<QTextCursor >("QTextCursor");
+    qRegisterMetaType<QList<QPersistentModelIndex>>("QList<QPersistentModelIndex>");
+    qRegisterMetaType<QVector<int>>("QVector<int>");
+    qRegisterMetaType<QAbstractItemModel::LayoutChangeHint>("QAbstractItemModel::LayoutChangeHint");
+
+    connect(session,SIGNAL(UpdataDebugEdit(QString)),this,SLOT(slotUpdataDebugEidt(QString)));
+
+    TablaViewInit();
+    ui->tableView_recv->setContextMenuPolicy(Qt::CustomContextMenu); //可弹出右键菜单
+    MenuInit();
+    ProgressBarInit();
+    WritePathInit();
+
+    m_bSideflag = false;
+    //控制sidewidget,的动画类
+    m_propertyAnimation = new QPropertyAnimation(ui->sideWidget,"geometry");
+    //关联的缓和曲线将用于控制 startValue 和 endValue 之间的插值进度
+    m_propertyAnimation->setEasingCurve(QEasingCurve::InOutQuint);
+    //设置动画时间（单位：毫秒）
+    m_propertyAnimation->setDuration(300);
+//    win.setWidth(900-276);
+//    cout<< endl << "x: " << ui->pos().x() << "y: " << ui->pos.y() << endl;
+
+    this->resize(720,600);
+    ui->sideWidget->hide();
+    ui->labelConIocn->setStyleSheet("image: url(:/res/fail.svg);");
+    IconInit();
+    BtnEnable();
+
+
+}
+
+Widget::~Widget()
+{
+    delete session;
+    delete client;
+    delete ui;
+}
+
+void Widget::slotconTimeout()
+{
+    QMessageBox::information(this, tr("提示"), tr("超时了"),
+        QMessageBox::Ok | QMessageBox::Cancel,
+        QMessageBox::Ok);
+}
+
+void Widget::MenuInit()
+{
+    popMenu = new QMenu(ui->tableView_recv);
+    actionShowAll = new QAction();
+    actionEncode = new QAction();
+    actionTag = new QAction();
+    actionShowAll ->setText(QString("查看全部"));
+    actionEncode ->setText(QString("解析报文"));
+    actionTag->setText(QString("标记此行"));
+    popMenu->addAction(actionShowAll);
+    popMenu->addAction(actionEncode);
+    popMenu->addAction(actionTag);
+    connect(actionShowAll,SIGNAL(triggered()),this,SLOT(slotactionShowAll()));
+    connect(actionEncode,SIGNAL(triggered()),this,SLOT(slotactionEncode()));
+    connect(actionTag,SIGNAL(triggered()),this,SLOT(slotactionTag()));
+    connect(ui->tableView_recv, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(slotContextMenu(QPoint)));
+}
+
+void Widget::IconInit()
+{
+    ui->Btn_Connect->setIcon(QIcon(":/res/Icon/lianjie.svg"));
+    ui->Btn_Close->setIcon(QIcon(":/res/Icon/duankai.svg"));
+    ui->Btn_Init->setIcon(QIcon(":/res/Icon/init.svg"));
+    ui->Btn_TotalCall->setIcon(QIcon(":/res/Icon/datacall.svg"));
+    ui->Btn_ClockSyn->setIcon(QIcon(":/res/Icon/sync-time.svg"));
+    ui->Btn_ClockRead->setIcon(QIcon(":/res/Icon/read-time.svg"));
+    ui->Btn_Reset->setIcon(QIcon(":/res/Icon/reset.svg"));
+    ui->Btn_FileTransfer->setIcon(QIcon(":/res/FileTransfer.svg"));
+    ui->Btn_RemoteControl->setIcon(QIcon(":/res/Icon/control.svg"));
+    ui->Btn_ElectricalEnergyCall->setIcon(QIcon(":/res/Icon/ElectricalEnergyCall.svg"));
+    ui->Btn_VersionUpdata->setIcon(QIcon(":/res/Icon/VersionUpdata.svg"));
+}
+
+void Widget::BtnEnable()
+{
+    if(isconnect!=0)
+    {
+        ui->Btn_Init->setEnabled(false);
+        ui->Btn_TotalCall->setEnabled(false);
+        ui->Btn_ClockSyn->setEnabled(false);
+        ui->Btn_ClockRead->setEnabled(false);
+        ui->Btn_Reset->setEnabled(false);
+        ui->Btn_FileTransfer->setEnabled(false);
+        ui->Btn_RemoteControl->setEnabled(false);
+        ui->Btn_ElectricalEnergyCall->setEnabled(false);
+        ui->Btn_VersionUpdata->setEnabled(false);
+    }
+    else
+    {
+        ui->Btn_Init->setEnabled(true);
+        ui->Btn_TotalCall->setEnabled(true);
+        ui->Btn_ClockSyn->setEnabled(true);
+        ui->Btn_ClockRead->setEnabled(true);
+        ui->Btn_Reset->setEnabled(true);
+        ui->Btn_FileTransfer->setEnabled(true);
+        ui->Btn_RemoteControl->setEnabled(true);
+        ui->Btn_ElectricalEnergyCall->setEnabled(true);
+        ui->Btn_VersionUpdata->setEnabled(true);
+    }
+}
+
+void Widget::slotContextMenu(QPoint pos)
+{
+    auto index = ui->tableView_recv->indexAt(pos);
+    if (index.isValid())
+    {
+        popMenu->exec(QCursor::pos()); // 菜单出现的位置为当前鼠标的位置
+    }
+}
+
+void Widget::slotactionShowAll()
+{
+    dialog_showall = new Dialog_ShowAll();
+    dialog_showall->setModal(false);
+
+    connect(this,SIGNAL(ShowAll(QString,QString,QString)),dialog_showall,SLOT(ShowAll(QString,QString,QString)));
+    QString msg;
+    auto q_index = ui->tableView_recv->currentIndex();
+    int index = q_index.row();
+
+    QString sender((""));
+    QVariant state = ui->tableView_recv->model()->index(index,0).data();
+    sender = sender+state.toString();
+    QString type((""));
+    state = ui->tableView_recv->model()->index(index,1).data();
+    type = type+state.toString();
+    QString data((""));
+    QVariant frame = ui->tableView_recv->model()->index(index,2).data();
+    data = data+frame.toString();
+    //qDebug() << "frame: " <<frame;
+    //qDebug() << "frame: " <<frame.toString();
+    msg = sender + type +data;
+
+/*    QMessageBox messageBox;
+    messageBox.setIcon(QMessageBox::Icon::Information);
+    messageBox.setText(frame.toString());
+    messageBox.exec();
+*/
+
+//    qDebug() << "sender: " <<sender;
+//    qDebug() << "type: " <<type;
+    int n = data.length();
+    while(n-2 > 0)
+    {
+        n = n - 2;
+        data.insert(n," ");
+    }
+
+//    qDebug() << "data: " <<data;
+
+    emit ShowAll(sender,type,data);
+    //显示弹窗
+    dialog_showall->show();
+}
+
+void Widget::slotactionEncode()
+{
+    QMessageBox::information(this,
+        tr("解析报文"),
+        tr("解析报文"),
+        QMessageBox::Ok | QMessageBox::Cancel,
+                             QMessageBox::Ok);
+}
+
+void Widget::slotactionTag()
+{
+//    QMessageBox::information(this,
+//        tr("标记此行"),
+//        tr("标记此行"),
+//        QMessageBox::Ok | QMessageBox::Cancel,
+//                             QMessageBox::Ok);
+    auto q_index = ui->tableView_recv->currentIndex();
+    int index = q_index.row();
+    if(!colorfalage)
+    {
+        model->item(index, 0)->setBackground(QColor(Qt::yellow));
+        model->item(index, 1)->setBackground(QColor(Qt::yellow));
+        model->item(index, 2)->setBackground(QColor(Qt::yellow));
+        colorfalage = !colorfalage;
+    }else
+    {
+        model->item(index, 0)->setBackground(QColor(Qt::white));
+        model->item(index, 1)->setBackground(QColor(Qt::white));
+        model->item(index, 2)->setBackground(QColor(Qt::white));
+        colorfalage = !colorfalage;
+    }
+
+}
+
+void Widget::slotTestConfirm()
+{
+
+    connect(session,SIGNAL(TestConfirmTimeOut()),this,SLOT(slotTestConfirmTimeOut()));
+    QFuture<bool> TestSessionSuccess =QtConcurrent::run(session,&Session::TestSessionSuccess,client);
+
+
+}
+
+void Widget::slotTestConfirmTimeOut()
+{
+    isconnect = -1;
+    delete client;
+}
+
+void Widget::slotappendData(int author, char type, QString data)
+{
+        cout << __FUNCTION__ << endl;
+        int row = ui->tableView_recv->model()->rowCount();
+        QColor *color;
+        //发送者
+        if(author == 0)
+        {
+            model->setItem(row, 0, new QStandardItem("主站"));
+            color = new QColor(255, 0, 0);
+        }
+        else if(author == 1)
+        {
+            model->setItem(row, 0, new QStandardItem("从站"));
+            color = new QColor(0, 255, 0);
+        }else
+        {
+            model->setItem(row, 0, new QStandardItem("其他消息"));
+            color = new QColor(0, 0, 255);
+        }
+        model->item(row, 0)->setTextAlignment(Qt::AlignCenter);
+        model->item(row, 0)->setForeground(QBrush(*color));
+        //帧类型
+        model->setItem(row, 1, new QStandardItem((QString(type)+QString("格式"))));
+        model->item(row, 1)->setTextAlignment(Qt::AlignCenter);
+        model->item(row, 1)->setForeground(QBrush(*color));
+        //帧数据
+        model->setItem(row, 2, new QStandardItem(data));
+        model->item(row, 2)->setForeground(QBrush(*color));
+        qDebug() << "data: " << data;
+        ui->tableView_recv->scrollToBottom();
+        cout << endl;
+}
+
+void Widget::slotshowDirname(char *name, int n)
+{
+    cout << __FUNCTION__ << endl;
+    char *NAME = new char[n+1];
+    memset(NAME,0,n+1);
+    my_strncpy(NAME,name,n);
+    cout << "NAME: " << NAME << endl;
+    int row = ui->tableView_Dir->model()->rowCount();
+    cout << "row: " <<row << endl;
+    dir_model->setItem(row, 0, new QStandardItem(NAME));
+    dir_model->item(row, 0)->setTextAlignment(Qt::AlignCenter);
+    ui->tableView_Dir->scrollToBottom();
+}
+
+void Widget::slotConnectRet(int status,QString IP , qint16 Port)
+{
+    if(status == 0)
+    {
+        //连接连接失败
+        QMessageBox::information(this, tr("提示"), tr("建立连接失败"),
+            QMessageBox::Ok | QMessageBox::Cancel,
+            QMessageBox::Ok);
+        movie->stop();
+        ui->labelConIocn->clear();
+        ui->labelConIocn->setStyleSheet("image: url(:/res/fail.svg);");
+
+    }
+    else if(status == 1)
+    {
+        //连接成功
+        ui->labelConIocn->setStyleSheet("image: url(:/res/success.svg);");
+        ui->Edit_DeBug->append(QString("connect success!!!"));
+        ui->Edit_DeBug->append(QString("IP:%1,PORT:%2").arg(IP).arg(QString::number(Port)));
+        isconnect = 0;
+        movie->stop();
+        ui->labelConIocn->clear();
+        ui->labelConIocn->setStyleSheet("image: url(:/res/success.svg);");
+
+        //测试链路保活
+        //session->TestSession(client);
+//        connect(session,SIGNAL(TestConfirm()),this,SLOT(slotTestConfirm()));
+//        QFuture<bool> TestSession =QtConcurrent::run(session,&Session::TestSession,client);
+//        cout << "test start" << endl;
+    }
+    else
+    {
+        cout << "connecting" << endl;
+    }
+    BtnEnable();
+
+}
+
+void Widget::recvEidt_updata(char *bufrecv)
+{
+    bufrecv = (char*)malloc(BUF_LEN);
+    QString recv_str;
+    if(bufrecv[0] == 0x68)
+    {
+        int n = ((unsigned char)bufrecv[2])+2;
+        cout << "recvEidt_updata "<< n << " bit" <<":" ;//<<  bufrecv << endl;
+        show_hex(bufrecv,n);
+        session->SetRecvBuf(bufrecv);
+        cout << bufrecv << endl;
+        recv_str = QString(bufrecv);
+        qDebug() << "recv_str: " << recv_str;
+    }else
+    {
+         recv_str = QString(bufrecv);
+    }
+    //数据更新到TableView中,待写.................
+    //ui->Edit_recv->append(recv_str);
+}
+
+void Widget::TablaViewInit()
+{
+    //-----接收框初始化------
+    model = new QStandardItemModel();
+    ui->tableView_recv->setModel(model);
+
+    QStringList table_h_headers;
+    table_h_headers << "发送者" << "帧类型" << "帧数据";
+    model->setHorizontalHeaderLabels(table_h_headers);
+    // 显示网格线
+    ui->tableView_recv->setShowGrid(true);
+    // 线的样式
+    ui->tableView_recv->setGridStyle(Qt::DotLine);
+    ui->tableView_recv->setColumnWidth(0,100);
+    ui->tableView_recv->setColumnWidth(1,100);
+    //ui->tableView_recv->setColumnWidth(2,300);
+    ui->tableView_recv->horizontalHeader()->setStretchLastSection(true); //最后一列填满表
+
+    //--------目录初始化------------
+    dir_model = new QStandardItemModel();
+    ui->tableView_Dir->setModel(dir_model);
+    QStringList table_h_headers1;
+    table_h_headers1 << "目录名";
+    dir_model->setHorizontalHeaderLabels(table_h_headers1);
+    // 显示网格线
+    ui->tableView_Dir->setShowGrid(true);
+    // 线的样式
+    ui->tableView_Dir->setGridStyle(Qt::DotLine);
+    ui->tableView_Dir->horizontalHeader()->setStretchLastSection(true); //最后一列填满表
+
+    connect(session,SIGNAL(append_data(int,char,QString)),this,SLOT(slotappendData(int,char,QString)));
+    connect(session,SIGNAL(show_dirname(char*,int)),this,SLOT(slotshowDirname(char*,int)));
+
+
+    //测试数据
+    for(int i = 0; i< 5 ; i++)
+    {
+        model->setItem(i, 0, new QStandardItem("主站"));
+        model->setItem(i, 1, new QStandardItem("I格式"));
+        if(i%2)
+            model->setItem(i, 2, new QStandardItem("681f040000000d8414000100018ca6b9e300a07583cd008a947af500e2dce7d700"));
+        else
+            model->setItem(i, 2, new QStandardItem("680e0200000064010700010000000014"));
+    }
+    for(int i = 0 ; i<9;i+=3)
+    {
+        dir_model->setItem(i,0,new QStandardItem("word"));
+        dir_model->setItem(i+1,0,new QStandardItem("excel"));
+        dir_model->setItem(i+2,0,new QStandardItem("pdf"));
+    }
+
+
+}
+
+void Widget::ProgressBarInit()
+{
+    ui->progressBar_Read->setOrientation(Qt::Horizontal);
+    ui->progressBar_Read->setMinimum(0);  // 最小值
+    ui->progressBar_Read->setMaximum(100);  // 最大值
+    ui->progressBar_Read->setValue(0);
+    ui->progressBar_Write->setOrientation(Qt::Horizontal);
+    ui->progressBar_Write->setMinimum(0);  // 最小值
+    ui->progressBar_Write->setMaximum(100);  // 最大值
+    ui->progressBar_Write->setValue(0);
+    connect(session,SIGNAL(ReadMax(int)),this,SLOT(slotReadPorgressMax(int)));
+    connect(session,SIGNAL(ReadValue(int)),this,SLOT(slotReadValue(int)));
+    connect(session,SIGNAL(WriteMax(int)),this,SLOT(slotWritePorgressMax(int)));
+    connect(session,SIGNAL(WriteValue(int)),this,SLOT(slotWriteValue(int)));
+}
+
+void Widget::WritePathInit()
+{
+    // 创建D:/app/data/write文件夹
+    // 检查目录是否存在，若不存在则新建
+    QDir *dir = new QDir(WRITEPATH);
+    if(!dir->exists(WRITEPATH))
+    {
+          dir->mkpath(WRITEPATH);
+    }
+    char filepath[50] = {0};
+    strcat(filepath,WRITEPATH);
+    strcat(filepath,"filetest.txt");
+    //cout << filepath << endl;
+    QFile *file = new QFile(filepath);
+    //如果txt文件路径不存在
+    if(!dir->exists(filepath))
+    {
+    file->open(QIODevice::WriteOnly | QIODevice::Text);//创建txt
+    file->close();
+    //对文件进行写操作
+    if(!file->open(QIODevice::Append | QIODevice::Text)){
+        qDebug()<<"文件打开失败";
+    }
+    //向文件中写入字符串
+    file->write("this is test ,that all !!! ");
+    //关闭文件
+    file->close();
+    }
+
+}
+void Widget::slotReadPorgressMax(int Max)
+{
+    ui->progressBar_Read->setMaximum(Max);  // 最大值
+}
+
+void Widget::slotReadValue(int Value)
+{
+    ui->progressBar_Read->setValue(Value);  // 当前进度
+    double dProgress = (ui->progressBar_Read->value() - ui->progressBar_Read->minimum()) * 100.0
+                    / (ui->progressBar_Read->maximum() - ui->progressBar_Read->minimum());
+    ui->progressBar_Read->setFormat(QString::fromLocal8Bit("%1%").arg(QString::number(dProgress, 'f', 1)));
+    ui->progressBar_Read->setAlignment(Qt::AlignRight | Qt::AlignVCenter);  // 对齐方式
+}
+
+void Widget::slotWritePorgressMax(int Max)
+{
+    ui->progressBar_Write->setMaximum(Max);  // 最大值
+}
+
+void Widget::slotWriteValue(int Value)
+{
+    ui->progressBar_Write->setValue(Value);  // 当前进度
+    double dProgress = (ui->progressBar_Write->value() - ui->progressBar_Write->minimum()) * 100.0
+                    / (ui->progressBar_Write->maximum() - ui->progressBar_Write->minimum());
+    ui->progressBar_Write->setFormat(QString::fromLocal8Bit("%1%").arg(QString::number(dProgress, 'f', 1)));
+    ui->progressBar_Write->setAlignment(Qt::AlignRight | Qt::AlignVCenter);  // 对齐方式
+}
+
+void Widget::slotReadLabel(int status)
+{
+    QPalette pe;
+    if(status == 0)
+    {
+        ui->label_ReadEnable->setText(QString("未激活"));
+        pe.setColor(QPalette::WindowText,Qt::black);
+        ui->label_ReadEnable->setPalette(pe);
+    }
+    else if(status == 1)
+    {
+        ui->label_ReadEnable->setText(QString("已激活"));
+        pe.setColor(QPalette::WindowText,Qt::red);
+        ui->label_ReadEnable->setPalette(pe);
+    }
+    else if(status == 2)
+    {
+        ui->label_ReadEnable->setText(QString("已完成"));
+        pe.setColor(QPalette::WindowText,Qt::green);
+        ui->label_ReadEnable->setPalette(pe);
+    }
+}
+
+void Widget::slotWriteLabel(int status)
+{
+    QPalette pe;
+    if(status == 0)
+    {
+        ui->label_WirteEnable->setText(QString("未激活"));
+        pe.setColor(QPalette::WindowText,Qt::black);
+        ui->label_WirteEnable->setPalette(pe);
+    }
+    else if(status == 1)
+    {
+        ui->label_WirteEnable->setText(QString("已激活"));
+        pe.setColor(QPalette::WindowText,Qt::red);
+        ui->label_WirteEnable->setPalette(pe);
+    }
+    else if(status == 2)
+    {
+        ui->label_WirteEnable->setText(QString("已完成"));
+        pe.setColor(QPalette::WindowText,Qt::green);
+        ui->label_WirteEnable->setPalette(pe);
+    }
+}
+
+void Widget::slotUpdataDebugEidt(QString msg)
+{
+    ui->Edit_DeBug->append(msg);
+}
+
+
+void Widget::on_Btn_Connect_clicked()
+{
+
+    ui->Edit_DeBug->append(QString("start connect..........."));
+    if(ui->radioBtn_Client->isChecked())
+    {
+        qDebug() << "本地测试";
+        ui->Edit_IP->setText(QString("127.0.0.1"));
+        ui->Edit_Port->setText(QString("7676"));
+    }
+    else if(ui->radioBtn_Server->isChecked())
+    {
+        qDebug() << "终端测试";
+        ui->Edit_IP->setText(QString("192.168.1.15"));
+        ui->Edit_Port->setText(QString("2404"));
+    }
+    QString IP = ui->Edit_IP->text();
+    quint16 Port = ui->Edit_Port->text().toInt();
+//        qDebug() << "IP：" << IP;
+//        qDebug() << "Port: " << Port;
+    client = new Client();
+
+    connect(session,SIGNAL(ConnectRet(int,QString,qint16)),this,SLOT(slotConnectRet(int,QString,qint16)));
+
+    QFuture<bool> ConnectSession =QtConcurrent::run(session,&Session::ConnectSession,client,IP,Port);
+
+    //加载中动画
+    ui->labelConIocn->clear();
+    ui->labelConIocn->setStyleSheet("image: url(:/res/loading.gif);");
+    movie = new QMovie(":/res/loading.gif");
+    ui->labelConIocn->setMovie(movie); // 1. 设置要显示的 GIF 动画图片
+    movie->start(); // 2. 启动动画
+
+    //ConnectRet.waitForFinished();
+
+
+}
+
+
+void Widget::on_Btn_Close_clicked()
+{
+    delete client;
+    QMessageBox::information(this, tr("提示"), tr("连接已断开"),
+        QMessageBox::Ok | QMessageBox::Cancel,
+        QMessageBox::Ok);
+    ui->labelConIocn->setStyleSheet("image: url(:/res/fail.svg);");
+}
+
+void Widget::on_Btn_Recv_Clear_clicked()
+{
+    model->removeRows(0,model->rowCount()); //删除所有行
+}
+
+void Widget::on_Btn_Debug_Clear_clicked()
+{
+    ui->Edit_DeBug->clear();
+}
+
+void Widget::on_Btn_TotalCall_clicked()
+{
+    if(isconnect == 0)
+    {
+        session->TotalCallSession(client);
+
+        QFuture<bool> TotalCallSessionSuccess =QtConcurrent::run(session,&Session::TotalCallSessionSuccess,client);
+        //QFuture<void> Thread_read =QtConcurrent::run(client,&Client::read);
+        //Thread_read.waitForFinished();
+    }
+    else
+    {
+        QMessageBox::information(this, tr("提示"), tr("请先进行连接"),
+            QMessageBox::Ok | QMessageBox::Cancel,
+            QMessageBox::Ok);
+    }
+
+}
+
+void Widget::on_Btn_Init_clicked()
+{
+
+    if(isconnect == 0)
+    {
+        session->InitSession(client);
+        QFuture<bool> InitSessionSuccess =QtConcurrent::run(session,&Session::InitSessionSuccess,client);
+        //session->InitSessionSuccess(client->get_socket());
+        //QFuture<void> Thread_read =QtConcurrent::run(client,&Client::read);
+        //Thread_read.waitForFinished();
+    }
+    else
+    {
+        QMessageBox::information(this, tr("提示"), tr("请先进行连接"),
+            QMessageBox::Ok | QMessageBox::Cancel,
+            QMessageBox::Ok);
+    }
+
+
+}
+
+void Widget::on_Btn_ClockSyn_clicked()
+{
+    if(isconnect == 0)
+    {
+        Frame f = session->ClockSynSession(client);
+        cout << __FUNCTION__ << endl;
+        //show_hex((char*)(f.GetAPDU()),f.GetAPDU()[1]+2);
+        QFuture<bool> ClockSynSessionSuccess =QtConcurrent::run(session,&Session::ClockSynSessionSuccess,client,f);
+        ClockSynSessionSuccess.waitForFinished();
+    }
+    else
+    {
+        QMessageBox::information(this, tr("提示"), tr("请先进行连接"),
+            QMessageBox::Ok | QMessageBox::Cancel,
+            QMessageBox::Ok);
+    }
+}
+
+void Widget::on_Btn_ClockRead_clicked()
+{
+    if(isconnect == 0)
+    {
+        session->ClockReadSession(client);
+        cout << __FUNCTION__ << endl;
+        //show_hex((char*)(f.GetAPDU()),f.GetAPDU()[1]+2);
+        QFuture<bool> ClockReadSessionSuccess =QtConcurrent::run(session,&Session::ClockReadSessionSuccess,client);
+        //ClockReadSessionSuccess.waitForFinished();
+    }
+    else
+    {
+        QMessageBox::information(this, tr("提示"), tr("请先进行连接"),
+            QMessageBox::Ok | QMessageBox::Cancel,
+            QMessageBox::Ok);
+    }
+}
+
+void Widget::on_Btn_Reset_clicked()
+{
+    if(isconnect == 0)
+    {
+        session->ResetSession(client);
+        cout << __FUNCTION__ << endl;
+        //show_hex((char*)(f.GetAPDU()),f.GetAPDU()[1]+2);
+        QFuture<bool> ClockReadSessionSuccess =QtConcurrent::run(session,&Session::ResetSessionSuccess,client);
+        ClockReadSessionSuccess.waitForFinished();
+    }
+    else
+    {
+        QMessageBox::information(this, tr("提示"), tr("请先进行连接"),
+            QMessageBox::Ok | QMessageBox::Cancel,
+            QMessageBox::Ok);
+    }
+}
+
+void Widget::on_Btn_DirCall_clicked()
+{
+    if(isconnect == 0)
+    {
+        cout << __FUNCTION__ << endl;
+        QString DirNameStr = ui->Edit_DirName->text();
+        if(DirNameStr.isEmpty())
+        {
+            DirNameStr = QString("iec104");
+            ui->Edit_DirName->setText(DirNameStr);
+        }
+        char DirName[100];
+        strncpy(DirName,DirNameStr.toUtf8().data(),100);
+        cout << "DirName: " << DirName << endl;
+        session->DirCallSession(client,DirName);
+        //show_hex((char*)(f.GetAPDU()),f.GetAPDU()[1]+2);
+        QFuture<bool> DirCallSessionSuccess =QtConcurrent::run(session,&Session::DirCallSessionSuccess,client);
+//        ClockReadSessionSuccess.waitForFinished();
+    }
+    else
+    {
+        QMessageBox::information(this, tr("提示"), tr("请先进行连接"),
+            QMessageBox::Ok | QMessageBox::Cancel,
+            QMessageBox::Ok);
+    }
+
+}
+
+void Widget::on_Btn_Read_clicked()
+{
+    /* 读文件的弹窗
+    readDialog = new ReadFileDialog(this);
+    readDialog->setModal(false);
+    readDialog->show();
+    connect(readDialog,SIGNAL(EnablSuccess(bool,QString)), this, SLOT(EnablSuccess_res(bool,QString)));
+    */
+
+    if(isconnect == 0)
+    {
+        connect(session, SIGNAL(ReadLabelEnable(int)), this, SLOT(slotReadLabel(int)));
+        cout << __FUNCTION__ << endl;
+        QString RFileStr = ui->Edit_ReadFileName->text();
+        QString RDirStr = ui->Edit_StorageDir->text();
+        if(RFileStr.isEmpty())
+        {
+            RFileStr = QString("dir.cpp");
+            ui->Edit_ReadFileName->setText(RFileStr);
+        }
+        char RFileName[100] = {0};
+        strncpy(RFileName,RFileStr.toUtf8().data(),100);
+        cout << "RFileName: " <<  RFileName << endl;
+        qDebug()<< "RDirStr: " << RDirStr;
+        if(RDirStr.isEmpty())
+        {
+            ui->Edit_StorageDir->setText(PATH);
+        }
+        session->ReadFileSession(client,RFileName);
+        //show_hex((char*)(f.GetAPDU()),f.GetAPDU()[1]+2);
+        QFuture<bool> ReadFileSessionSuccess =QtConcurrent::run(session,&Session::ReadFileSessionSuccess,client,RDirStr);
+        //ClockReadSessionSuccess.waitForFinished();
+    }
+    else
+    {
+        QMessageBox::information(this, tr("提示"), tr("请先进行连接"),
+            QMessageBox::Ok | QMessageBox::Cancel,
+            QMessageBox::Ok);
+    }
+
+}
+
+/*
+
+void Widget::on_Btn_Read_my_clicked(char* DirName)
+{
+    if(isconnect == 0)
+    {
+        cout << __FUNCTION__ << endl;
+        cout << "DirName: " <<  DirName << endl;
+        session->ReadFileSession(client,DirName);
+        //show_hex((char*)(f.GetAPDU()),f.GetAPDU()[1]+2);
+        //QFuture<bool> ReadFileSessionSuccess =QtConcurrent::run(session,&Session::ReadFileSessionSuccess,client);
+        //ClockReadSessionSuccess.waitForFinished();
+    }
+    else
+    {
+        QMessageBox::information(this, tr("提示"), tr("请先进行连接"),
+            QMessageBox::Ok | QMessageBox::Cancel,
+            QMessageBox::Ok);
+    }
+}
+*/
+
+/*
+//void Widget::EnablSuccess_res(bool ret,QString Filename)
+//{
+
+//    if(ret)
+//    {
+//        //char *name = Filename.toLatin1().data();
+//        //on_Btn_Read_my_clicked(name);
+//        cout << "ReadSesson success!!!" << endl;
+//        bool end = true;
+//        char *pack_data;
+//        pack_data = new char[10];
+//        pack_data = (char*)"hello";
+//        connect(this,SIGNAL(WidgetReadFile(bool,char*)),readDialog,SLOT(WidgetReadFile_res(bool,char*)));
+//        emit WidgetReadFile(end,pack_data);
+//    }
+//    else
+//    {
+//        cout << "ReadSesson fail!!!" << endl;
+//    }
+
+//}
+*/
+
+void Widget::on_Btn_FileTransfer_clicked()
+{
+    int x = this->geometry().x();
+    int y = this->geometry().y();
+    int w = this->geometry().width();
+    int h = this->geometry().height();
+
+    cout<< endl << "x: " << x << "y: " << y << endl;
+    cout<< endl << "w: " << w << "h: " << h << endl;
+
+    if(!m_bSideflag)
+    {
+        if(w==1600)
+        {
+            this->setGeometry(x,y,w-300,h);
+        }
+        this->setGeometry(x,y,w+300,h);
+        m_bSideflag = !m_bSideflag;
+        ui->sideWidget->show();
+    }
+    else
+    {
+        this->setGeometry(x,y,w-300,h);
+        m_bSideflag = !m_bSideflag;
+        ui->sideWidget->hide();
+        if(w==1600)
+        {
+            this->setGeometry(x,y,w+300,h);
+        }
+
+    }
+}
+
+void Widget::on_Btn_DirSelect_clicked()
+{
+    cout << __FUNCTION__ << endl;
+    QString dir = QFileDialog::getExistingDirectory(this,
+            tr("Select Directory"), "/",
+             QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    qDebug() << "DirName: " << dir ;
+    ui->Edit_StorageDir->setText(dir);
+}
+
+void Widget::on_Btn_SelectFile_clicked()
+{
+    QString fileName = QFileDialog::getOpenFileName(
+            this,
+            tr("Select File"),
+            "D:/",
+            tr("*"));
+    qDebug() << "fileName: " << fileName ;
+    ui->Edit_WirteFileName->setText(fileName);
+}
+
+
+void Widget::on_Btn_Write_clicked()
+{
+    if(isconnect == 0)
+    {
+        connect(session, SIGNAL(WriteLabelEnable(int)), this, SLOT(slotWriteLabel(int)));
+        cout << __FUNCTION__ << endl;
+        QString WFileStr = ui->Edit_WirteFileName->text();
+        if(WFileStr.isEmpty())
+        {
+            WFileStr = QString(WRITEPATH)+QString("filetest.txt");
+            ui->Edit_WirteFileName->setText(WFileStr);
+        }
+        char WFileName[100] = {0};
+        strncpy(WFileName,WFileStr.toUtf8().data(),100);
+        cout << "WFileName: " <<  WFileName << endl;
+        qDebug()<< "WFileStr: " << WFileStr;
+        Frame f = session->WriteFileSession(client,WFileName);
+        //show_hex((char*)(f.GetAPDU()),f.GetAPDU()[1]+2);
+        QFuture<bool> WriteFileSessionSuccess =QtConcurrent::run(session,&Session::WriteFileSessionSuccess,client,f,WFileStr);
+        //ClockReadSessionSuccess.waitForFinished();
+    }
+    else
+    {
+        QMessageBox::information(this, tr("提示"), tr("请先进行连接"),
+            QMessageBox::Ok | QMessageBox::Cancel,
+            QMessageBox::Ok);
+    }
+}
+

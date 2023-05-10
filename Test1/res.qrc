@@ -1,0 +1,19 @@
+<RCC>
+    <qresource prefix="/">
+        <file>res/connect.gif</file>
+        <file>res/fail.svg</file>
+        <file>res/success.svg</file>
+        <file>res/loading.gif</file>
+        <file>res/FileTransfer.svg</file>
+        <file>res/Icon/duankai.svg</file>
+        <file>res/Icon/lianjie.svg</file>
+        <file>res/Icon/control.svg</file>
+        <file>res/Icon/datacall.svg</file>
+        <file>res/Icon/ElectricalEnergyCall.svg</file>
+        <file>res/Icon/init.svg</file>
+        <file>res/Icon/read-time.svg</file>
+        <file>res/Icon/reset.svg</file>
+        <file>res/Icon/sync-time.svg</file>
+        <file>res/Icon/VersionUpdata.svg</file>
+    </qresource>
+</RCC>

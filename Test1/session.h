@@ -27,17 +27,50 @@ private:
     Frame *SendFrame;
     Frame *RecvFrame;
     QString FrameName;
-    bool isInit; // 初始化成功/失败
+    bool isInit;        // 初始化成功/失败
     Client *client_session;
+    FileOperation *wfileop;
+    int t0;     //建立连接的超时                  30s
+    int t1;     //发送或测试 APDU 的超时          15s
+    int t2;     //无数据报文时确认的超时，t2<t1    10s
+    int t3;     //长期空闲状态下发送测试帧的超时    20s
+    int test_t4; //发送测试帧的时间间隔           25s
+    clock_t t0_start;
+    clock_t t0_end;
+    double t0_clc;      //t0的计时器
+    clock_t t1_start;
+    clock_t t1_end;
+    double t1_clc;      //t1的计时器
+    clock_t t2_start;
+    clock_t t2_end;
+    double t2_clc;      //t2的计时器
+    clock_t t3_start;
+    clock_t t3_end;
+    double t3_clc;      //t3的计时器
+    clock_t test_start;
+    clock_t test_end;
+    double test_clc;    //test的计时器
+    bool WaitRecvTest;//是否在等待接收测试帧
+    //V（S）为发送状态变量，V（R）为接收状态变量，ACK为当前已经正确收到的所有I格式
+    int V_S;    //发送状态变量
+    int V_R;    //接收状态变量
+    int ACK;    //当前已经正确收到的所有I格式
+
 public:
-    //-----------接收框显示--------
-    QTableView *recv_TableView;
-    QStandardItemModel* table_model;
-    void append_data(int author,char type,QString &data);
     void updata_recv_edit(int author,unsigned char* data);
+signals:
+    //----------连接是否成功-------
+    void ConnectRet(int status,QString IP , qint16 Port);
+    //----------开启测试帧接收判定----
+    void TestConfirm();
+    void TestConfirmSuccess();
+    void TestConfirmTimeOut();
+private slots:
+
+signals:
+    //-----------接收框显示--------
+    void append_data(int author,char type,QString data);/*@author： 0是主站，1是从站*/
     //----------召唤目录显示--------
-    QTableView *dir_TableView;
-    QStandardItemModel* dirname_model;
     void show_dirname(char* name,int n);
 signals:
     //---------调试消息显示-------
@@ -64,8 +97,17 @@ public:
                     unsigned char QOI=0x00, unsigned char *obj = nullptr);
     
     void FrameSend(Client *&client,Frame &Frame);
-    //void RecvThread();
-    //void FrameRecv(Client *&client,Frame &Frame);
+    int FrameRecv(Client *&client,unsigned char (&recvBuff)[BUF_LEN]);
+    
+    //I格式C域的序号编号serial number
+    bool IFrameCBlocksSerialNumber(char (&C)[4]);
+    //I格式C域的序号判定
+    bool IFrameCBlocksSerialConfirm(char (&C)[4]);
+    //测试链路
+    bool TestSession(Client *&client);
+    bool TestSessionSuccess(Client *&client);
+    //建立连接
+    bool ConnectSession(Client *&client,QString IP,qint16 Port);
     // 初始化
     bool InitSession(Client *&client);
     bool InitSessionSuccess(Client *client);
@@ -87,6 +129,11 @@ public:
     //文件读取
     bool ReadFileSession(Client *client,char* RFileName);
     bool ReadFileSessionSuccess(Client *client,QString DirName=QString());
+    //文件写入
+    Frame WriteFileSession(Client *client,char* WFileName);
+    bool WriteFileSessionEnable(Client *client,Frame &frame);
+    bool WriteFileSessionConfirm(Client *client,Frame &frame,int offset);
+    bool WriteFileSessionSuccess(Client *client,Frame &frame,QString filename);
 
 signals:
     void Recv(char* buf);  //接收数据信号
