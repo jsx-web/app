@@ -134,6 +134,13 @@ public:
     bool WriteFileSessionEnable(Client *client,Frame &frame);
     bool WriteFileSessionConfirm(Client *client,Frame &frame,int offset);
     bool WriteFileSessionSuccess(Client *client,Frame &frame,QString filename);
+    //远程参数读写
+    //切换定值区号
+    bool ToggleFixedValueNumSession(Client *client,int FixedValueNum);
+    bool ToggleFixedValueNumSessionSuccess(Client *client,int FixedValueNum);
+    //读定值区号
+    bool ReadFixedValueNumSession(Client *client);
+    bool ReadFixedValueNumSessionSuccess(Client *client);
 
 signals:
     void Recv(char* buf);  //接收数据信号

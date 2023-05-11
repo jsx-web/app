@@ -18,7 +18,6 @@ using namespace std;
 //帧的最大容量
 #define BUF_LEN 256
 
-
 //I格式
 #define I_BIT_1 0x00
 #define I_BIT_3 0x00
@@ -41,7 +40,9 @@ using namespace std;
 #define C_IC_NA_1 100   //召唤命令
 #define C_CS_NA_1 103   //时钟同步
 #define C_RP_NA_1 105   //复位进程命令
-#define F_FR_NA_1 210   //文件传输
+#define F_FR_NA_1 210   //文件传
+#define C_SR_NA_1 200   //切换定值区
+#define C_RR_NA_1 201   //读定值区号
 
 //默认文件存储目录
 #define PATH "D:/app/data/"

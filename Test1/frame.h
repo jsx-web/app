@@ -37,6 +37,8 @@ public:
     bool SetReadFile(char* FileName);
     bool SetWriteFile(char* FileName);
     bool SetWriteData(QString filepath,int &offset);
+    bool SetReadFixedValueNum();
+    bool SetToggleFixedValueNum(int FixedValueNum);
 
 
 

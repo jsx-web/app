@@ -20,10 +20,10 @@ private:
     unsigned char FollowFlage;      //后续标志
     unsigned char *FileDate;        //文件数据
     unsigned char CRC;              //校验码
-    int FileOpFileSize(void* size); //存文件
     QDir *dir;
     QFile *file;
 
+    int FileOpFileSize(void* size); //存文件
 public:
     FileOperation();
     ~FileOperation();

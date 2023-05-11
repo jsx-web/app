@@ -15,6 +15,8 @@ private:
     WSADATA wsaData;
     SOCKET socketClient;
 public:
+    bool isconnect;
+public:
     Client();
     ~Client();
     int clinetConnect(QString IP, quint16 Port);
@@ -23,6 +25,7 @@ public:
     void write(QString Qdata);
     void write(unsigned char* Udata);
     bool socketEmpty();
+    void ClientcloseSocket();
     SOCKET get_socket();
 
 

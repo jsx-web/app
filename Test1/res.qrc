@@ -15,5 +15,8 @@
         <file>res/Icon/reset.svg</file>
         <file>res/Icon/sync-time.svg</file>
         <file>res/Icon/VersionUpdata.svg</file>
+        <file>res/Icon.svg</file>
+        <file>res/Left.svg</file>
+        <file>res/Right.svg</file>
     </qresource>
 </RCC>

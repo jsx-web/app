@@ -37,6 +37,7 @@ private:
     Ui::Widget *ui;
     Dialog_ShowAll *dialog_showall;
     bool m_bSideflag;
+    static int m_bSideflagcount;
     QPropertyAnimation *m_propertyAnimation;
     QButtonGroup *C_S_check;
     Client *client;
@@ -107,7 +108,9 @@ public:
     void MenuInit();
     void IconInit();
     void BtnEnable();
+    void SideWidgetEnable();
 private slots:
+    void on_Btn_sideWidget_clicked();
     void on_Btn_Connect_clicked();
     void on_Btn_Close_clicked();
     void on_Btn_Recv_Clear_clicked();
@@ -123,6 +126,9 @@ private slots:
     void on_Btn_DirSelect_clicked();
     void on_Btn_Write_clicked();
     void on_Btn_SelectFile_clicked();
+    void on_Btn_RemoteControl_clicked();
+    void on_Btn_ElectricalEnergyCall_clicked();
+    void on_Btn_VersionUpdata_clicked();
 
 signals:
     void WidgetReadFile(bool end, char* packe_data);

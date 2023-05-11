@@ -37,7 +37,8 @@ SOURCES += \
     file.cpp \
     readfiledialog.cpp \
     fileoperation.cpp \
-    dialog_showall.cpp
+    dialog_showall.cpp \
+    bufferqueues.cpp
 
 HEADERS += \
         widget.h \
@@ -48,7 +49,8 @@ HEADERS += \
     file.h \
     readfiledialog.h \
     fileoperation.h \
-    dialog_showall.h
+    dialog_showall.h \
+    bufferqueues.h
 
 FORMS += \
         widget.ui \
