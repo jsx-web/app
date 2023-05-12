@@ -30,7 +30,6 @@ public:
     explicit Widget(QWidget *parent = 0);
     ~Widget();
 
-//friend class Client;
 friend class Session;
 
 private:
@@ -43,7 +42,6 @@ private:
     Client *client;
     int isconnect;
     Session *session;
-    QThread* thread;
     QStandardItemModel* model;
     QStandardItemModel* dir_model;
     bool colorfalage;
