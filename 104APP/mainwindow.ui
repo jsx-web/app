@@ -44,7 +44,7 @@
 QTabBar::tab{height:50}</string>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="tab_Connect">
         <attribute name="title">
@@ -324,7 +324,7 @@ QTabBar::tab{height:50}</string>
           </widget>
          </item>
          <item>
-          <widget class="QTableView" name="tableView_2"/>
+          <widget class="QTableView" name="tableView_Init"/>
          </item>
         </layout>
        </widget>
@@ -382,7 +382,7 @@ QTabBar::tab{height:50}</string>
           </widget>
          </item>
          <item>
-          <widget class="QTableView" name="tableView_3"/>
+          <widget class="QTableView" name="tableView_TotalCall"/>
          </item>
         </layout>
        </widget>
@@ -491,7 +491,7 @@ QTabBar::tab{height:50}</string>
           </widget>
          </item>
          <item>
-          <widget class="QTableView" name="tableView_4"/>
+          <widget class="QTableView" name="tableView_Colck"/>
          </item>
         </layout>
        </widget>

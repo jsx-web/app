@@ -55,6 +55,12 @@ signals:
     void append_data(int author,char type,QString data);/*@author： 0是主站，1是从站*/
     //---------调试消息显示-------
     void UpdataDebugEdit(QString msg);
+    //--------根据model写入数据----
+    void UpdataTableView(int modelID,int modellen,QStringList data);
+    //--------总召唤数据显示-------
+    void ShowDataTotalCall(int packid,QString T1,QString obj_addr,QString data,QString QDS,QStringList TimeList);
+    //--------时钟控制的显示------
+    void ColckSyn(unsigned char T1,unsigned char*Time,int len);
 
 public slots:
 
@@ -66,8 +72,13 @@ public:
     // 初始化
     bool InitSession();
     bool InitSessionSuccess();
-
-
+    //总召
+    bool TotalCallSession();
+    bool TotalCallSessionSuccess();
+    bool TotalCallData(int packid,unsigned char T1,unsigned char* obj_addr,unsigned char* data);
+    //时钟同步
+    Frame ClockSynSession();
+    bool ClockSynSessionSuccess(Frame &Frame);
 
 };
 

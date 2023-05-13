@@ -33,8 +33,11 @@ public:
 
 private:
     QButtonGroup *C_S_check;
-    QStandardItemModel* recvmodel;
     QMovie *movie;
+    QStandardItemModel* recvmodel;
+    QStandardItemModel* initmodel;
+    QStandardItemModel* totalcallmodel;
+
 private:
     void Init();
     void TableVeiwInit();
@@ -48,6 +51,13 @@ private slots:
     void slotappendData(int author,char type,QString data);
     //-----------更新调试框--------
     void slotUpdataDebugEidt(QString msg);
+    //--------根据model写入数据----
+    void slotUpdataTableView(int modelID,int modellen,QStringList data);
+    //---------总召数据显示--------
+    void slotShowDataTotalCall(int packid,QString T1,QString obj_addr,QString data,QString QDS,QStringList TimeList);
+    //--------时钟控制的显示------
+    void slotColckSyn(unsigned char T1,unsigned char*Time,int len);
+
 
 private slots:
     void on_Btn_Connect_clicked();
@@ -55,6 +65,10 @@ private slots:
     void on_Btn_Close_clicked();
 
     void on_Btn_Init_clicked();
+
+    void on_Btn_TotalCall_clicked();
+
+    void on_Btn_ClockSyn_clicked();
 
 private:
     Ui::MainWindow *ui;

@@ -54,7 +54,7 @@ HEADERS += \
 FORMS += \
         mainwindow.ui
 
-LIBS += -lpthread libwsock32 libws2_32
+LIBS += -lpthread libws2_32 libwsock32
 
 RESOURCES += \
     res.qrc

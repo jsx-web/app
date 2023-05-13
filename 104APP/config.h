@@ -41,9 +41,13 @@ using namespace std;
 #define C_IC_NA_1 100   //召唤命令
 #define C_CS_NA_1 103   //时钟同步
 #define C_RP_NA_1 105   //复位进程命令
-#define F_FR_NA_1 210   //文件传
+#define F_FR_NA_1 210   //文件传输
 #define C_SR_NA_1 200   //切换定值区
 #define C_RR_NA_1 201   //读定值区号
+
+//TabableView对应ModelID和Len
+#define TableVeiwInitID 1
+#define TableVeiwInitLen 2
 
 //默认文件存储目录
 #define PATH "D:/app/data/"
@@ -63,6 +67,7 @@ using namespace std;
 char* Uchar_to_char(char* &Dest,unsigned char* Src,int Size);
 void show_hex(char *buf , int len);
 char* hex_to_char(char **dest , char *src);
+char *hex_to_char(char **dest, char *src,int len);
 char* my_strncpy(void* Dest,void* src,int size);
 float hextofloat (unsigned int number);
 //int tcpNonblockingRecv(int conn_sockfd, void *rx_buf, int buf_len, int timeval_sec, int timeval_usec);

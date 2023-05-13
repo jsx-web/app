@@ -23,7 +23,8 @@ public:
     int Getlen();
     char GerTpye();
 
-    bool setSFrame(int ACK);
+    bool setSFrame(int VS, int ACK);
+    void updataCON(int VS, int ACK);
     bool setTestFrame();
     bool SetinitFrame();
     bool SetTotalCall();
