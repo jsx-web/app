@@ -37,11 +37,17 @@ private:
     QStandardItemModel* recvmodel;
     QStandardItemModel* initmodel;
     QStandardItemModel* totalcallmodel;
+    QStandardItemModel* colckmodel;
+    QStandardItemModel* resetmodel;
+    QStandardItemModel* dirmodel;
+    QStandardItemModel* remotevaluemodel;
+    QStringList list;
 
 private:
     void Init();
     void TableVeiwInit();
     void IconInit();
+    void ProgressBarInit();
 signals:
 
 private slots:
@@ -56,7 +62,30 @@ private slots:
     //---------总召数据显示--------
     void slotShowDataTotalCall(int packid,QString T1,QString obj_addr,QString data,QString QDS,QStringList TimeList);
     //--------时钟控制的显示------
-    void slotColckSyn(unsigned char T1,unsigned char*Time,int len);
+    void slotColckControl(int operation, char sender, QString Time);
+    //--------复位的显示------
+    void slotResetShow(int status, QString decs);
+    //-------文件目录的显示-------
+    void slotShowDirname(char* name,int n);
+
+    //---------读文件标签---------
+    void slotReadLabel(int status);
+    //----读文件进度条最大值设置-----
+    void slotReadPorgressMax(int Max);
+    //-------读文件Value值更新-----
+    void slotReadValue(int Value);
+
+    //-------写文件标签------------
+    void slotWriteLabel(int status);
+    //----写文件进度条最大值设置-----
+    void slotWritePorgressMax(int Max);
+    //-------写文件Value值更新-----
+    void slotWriteValue(int Value);
+
+    //-------远程参数读写--------
+    void slotRemoteValueControl(int operation,int ValueNum,int ValueMin,int ValueMax,
+                                unsigned char Flag,unsigned char *ObjAddr,unsigned char Tag,
+                                QString Value);
 
 
 private slots:
@@ -69,6 +98,30 @@ private slots:
     void on_Btn_TotalCall_clicked();
 
     void on_Btn_ClockSyn_clicked();
+
+    void on_Btn_ClockRead_clicked();
+
+    void on_Btn_Reset_clicked();
+
+    void on_Btn_DirCall_clicked();
+
+    void on_Btn_Read_clicked();
+
+    void on_Btn_DirSelect_clicked();
+
+    void on_Btn_Write_clicked();
+
+    void on_Btn_SelectFile_clicked();
+
+    void on_Btn_ReadValueNum_clicked();
+
+    void on_Btn_SetValueNum_clicked();
+
+    void on_Btn_InputObjAddr_clicked();
+
+    void on_Btn_ReadValue_clicked();
+
+    void on_Btn_ObjAddrClear_clicked();
 
 private:
     Ui::MainWindow *ui;

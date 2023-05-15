@@ -37,6 +37,7 @@ public:
     bool SetWriteData(QString filepath,int &offset);
     bool SetReadFixedValueNum();
     bool SetToggleFixedValueNum(int FixedValueNum);
+    bool SetReadValue(int Value,QStringList ObjAddr);
 
 
 

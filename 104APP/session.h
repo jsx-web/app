@@ -30,7 +30,11 @@ private:
     int V_S;    //发送状态变量
     int V_R;    //接收状态变量
     int ACK;    //当前已经正确收到的所有I格式
+    FileOperation *wfileop;
+    int ValueMAX;
+    int ValueMIN;
 public:
+    bool Signals_Slot;  //信号和信号槽连接标识
     unsigned char* GetrecvBuf();
     int GetBufLen();
     Terminal * GetTerminal();
@@ -60,13 +64,32 @@ signals:
     //--------总召唤数据显示-------
     void ShowDataTotalCall(int packid,QString T1,QString obj_addr,QString data,QString QDS,QStringList TimeList);
     //--------时钟控制的显示------
-    void ColckSyn(unsigned char T1,unsigned char*Time,int len);
+    void ColckControl(int operation, char sender, QString Time);
+    //--------复位的显示---------
+    void ResetShow(int status, QString decs);
+    //-------文件目录的显示-------
+    void ShowDirname(char* name,int n);
+    //---------进度条控制--------
+    void ReadMax(int maxSize);  //读文件最大值信号
+    void ReadValue(int Value);//Value值更新信号
+    void WriteMax(int maxSize);  //写文件最大值信号
+    void WriteValue(int Value);//Value值更新信号
+   //---------激活标签控制---------
+   void ReadLabelEnable(int status);
+   void WriteLabelEnable(int status);
+   //-----远程参数读写-------------
+   void RemoteValueControl(int operation, int ValueNum, int ValueMin, int ValueMax,
+                                           unsigned char Flag, unsigned char *ObjAddr, unsigned char Tag,
+                                           QString Value);
 
 public slots:
 
 public:
     //接收帧显示
     void updata_recv_edit(int author,unsigned char* data);
+    //测试链路
+    bool TestSession();
+    bool TestSessionSuccess();
     //建立连接
     bool ConnectSession(QString IP,qint16 Port);
     // 初始化
@@ -78,7 +101,32 @@ public:
     bool TotalCallData(int packid,unsigned char T1,unsigned char* obj_addr,unsigned char* data);
     //时钟同步
     Frame ClockSynSession();
-    bool ClockSynSessionSuccess(Frame &Frame);
+    bool ClockSynSessionSuccess(Frame &frame);
+    //时钟读取
+    bool ClockReadSession();
+    bool ClockReadSessionSuccess();
+    //复位
+    bool ResetSession();
+    bool ResetSessionSuccess();
+    //目录召唤
+    bool DirCallSession(char* DirName);
+    bool DirCallSessionSuccess();
+    //文件读取
+    bool ReadFileSession(char* RFileName);
+    bool ReadFileSessionSuccess(QString DirName=QString());
+    //文件写入
+    Frame WriteFileSession(char* WFileName);
+    bool WriteFileSessionEnable(Frame &frame);
+    bool WriteFileSessionConfirm(Frame &frame,int offset);
+    bool WriteFileSessionSuccess(Frame &frame,QString filename);
+    //------远程参数读写-------
+    //读取定值区号
+    //读定值区号
+    bool ReadFixedValueNumSession();
+    bool ReadFixedValueNumSessionSuccess();
+    //切换定值区号
+    bool SetFixedValueNumSession(int FixedValueNum);
+    bool SetFixedValueNumSessionSuccess(int FixedValueNum);
 
 };
 
