@@ -16,6 +16,8 @@
 #include <QMessageBox>
 
 #include "session.h"
+#include "dialog_writevalueadd.h"
+
 
 
 
@@ -33,6 +35,7 @@ public:
 
 private:
     QButtonGroup *C_S_check;
+    QButtonGroup *Write_check;
     QMovie *movie;
     QStandardItemModel* recvmodel;
     QStandardItemModel* initmodel;
@@ -42,6 +45,7 @@ private:
     QStandardItemModel* dirmodel;
     QStandardItemModel* remotevaluemodel;
     QStringList list;
+    QStandardItemModel* writevaluemodel;
 
 private:
     void Init();
@@ -84,8 +88,10 @@ private slots:
 
     //-------远程参数读写--------
     void slotRemoteValueControl(int operation,int ValueNum,int ValueMin,int ValueMax,
-                                unsigned char Flag,unsigned char *ObjAddr,unsigned char Tag,
+                                unsigned char Flag,QString ObjAddr,unsigned char Tag,
                                 QString Value);
+    //-------接收写参数的接收-----
+    void slotDialogWriteValue(QString addr ,QString tag, QString value);
 
 
 private slots:
@@ -119,9 +125,15 @@ private slots:
 
     void on_Btn_InputObjAddr_clicked();
 
+    void on_Btn_ObjAddrClear_clicked();
+
     void on_Btn_ReadValue_clicked();
 
-    void on_Btn_ObjAddrClear_clicked();
+    void on_Btn_ValueAdd_clicked();
+
+    void on_Btn_ValueClear_clicked();
+
+    void on_Btn_Preset_clicked();
 
 private:
     Ui::MainWindow *ui;

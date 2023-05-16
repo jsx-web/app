@@ -44,6 +44,9 @@ using namespace std;
 #define F_FR_NA_1 210   //文件传输
 #define C_SR_NA_1 200   //切换定值区
 #define C_RR_NA_1 201   //读定值区号
+#define C_RS_NA_1 202   //读多个/全部参数
+#define C_WS_NA_1 203   //写参数和定值
+
 
 //TabableView对应ModelID和Len
 #define TableVeiwInitID 1
@@ -66,8 +69,9 @@ using namespace std;
 
 char* Uchar_to_char(char* &Dest,unsigned char* Src,int Size);
 void show_hex(char *buf , int len);
-char* hex_to_char(char **dest , char *src);
-char *hex_to_char(char **dest, char *src,int len);
+char* hex_to_char(char **dest , char *src); //报文转char
+char *hex_to_char(char **dest, char *src,int len);//报文转字符
+char* str_to_char(char **dest, char *src,int len);//字符转报文
 char* my_strncpy(void* Dest,void* src,int size);
 float hextofloat (unsigned int number);
 //int tcpNonblockingRecv(int conn_sockfd, void *rx_buf, int buf_len, int timeval_sec, int timeval_usec);
@@ -108,5 +112,6 @@ bool cp56time2a_to_char(char (&date)[7],st_cp56time2a time);
 QString get_cp56time2a_string(st_cp56time2a *time);
 uint64_t get_cp56time2a_hex(st_cp56time2a *time);
 void show_str(char *buf , int len);
+
 
 #endif // CONFIG_H

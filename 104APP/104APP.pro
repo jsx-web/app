@@ -37,7 +37,8 @@ SOURCES += \
     session.cpp \
     clock.cpp \
     info.cpp \
-    infobuffer.cpp
+    infobuffer.cpp \
+    dialog_writevalueadd.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -49,10 +50,12 @@ HEADERS += \
     session.h \
     clock.h \
     info.h \
-    infobuffer.h
+    infobuffer.h \
+    dialog_writevalueadd.h
 
 FORMS += \
-        mainwindow.ui
+        mainwindow.ui \
+    dialog_writevalueadd.ui
 
 LIBS += -lpthread libws2_32 libwsock32
 

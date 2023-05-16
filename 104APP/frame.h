@@ -38,6 +38,7 @@ public:
     bool SetReadFixedValueNum();
     bool SetToggleFixedValueNum(int FixedValueNum);
     bool SetReadValue(int Value,QStringList ObjAddr);
+    bool SetPerset(int ValueNum,int status,QStringList addrlsit,QStringList taglist,QStringList valuelist);
 
 
 

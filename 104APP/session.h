@@ -79,7 +79,7 @@ signals:
    void WriteLabelEnable(int status);
    //-----远程参数读写-------------
    void RemoteValueControl(int operation, int ValueNum, int ValueMin, int ValueMax,
-                                           unsigned char Flag, unsigned char *ObjAddr, unsigned char Tag,
+                                           unsigned char Flag,QString ObjAddr, unsigned char Tag,
                                            QString Value);
 
 public slots:
@@ -127,6 +127,11 @@ public:
     //切换定值区号
     bool SetFixedValueNumSession(int FixedValueNum);
     bool SetFixedValueNumSessionSuccess(int FixedValueNum);
+    //读多个或全部参数
+    bool ReadValueSession(int Value,QStringList ObjAddr);
+    bool ReadValueSessionSuccess(int Value);
+    //参数预置
+    bool PersetSession(int ValueNum,int status,QStringList addr,QStringList tag,QStringList value);
 
 };
 
