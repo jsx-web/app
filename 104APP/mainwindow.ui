@@ -44,7 +44,7 @@
 QTabBar::tab{height:50}</string>
        </property>
        <property name="currentIndex">
-        <number>6</number>
+        <number>8</number>
        </property>
        <widget class="QWidget" name="tab_Connect">
         <attribute name="title">
@@ -842,240 +842,170 @@ QTabBar::tab{height:50}</string>
              <height>165</height>
             </size>
            </property>
-           <widget class="QPushButton" name="Btn_ReadValueNum">
-            <property name="geometry">
-             <rect>
-              <x>30</x>
-              <y>10</y>
-              <width>75</width>
-              <height>31</height>
-             </rect>
-            </property>
-            <property name="text">
-             <string>读定值区号</string>
-            </property>
-           </widget>
-           <widget class="QWidget" name="widget_10" native="true">
-            <property name="geometry">
-             <rect>
-              <x>170</x>
-              <y>10</y>
-              <width>171</width>
-              <height>141</height>
-             </rect>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_13">
-             <property name="topMargin">
-              <number>0</number>
-             </property>
-             <property name="bottomMargin">
-              <number>0</number>
-             </property>
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_14">
-               <item>
-                <widget class="QLabel" name="label">
-                 <property name="text">
-                  <string> 区号：</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLineEdit" name="Edit_ReadValueNum"/>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <widget class="QListView" name="listView_Addr">
-               <property name="enabled">
-                <bool>false</bool>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>165</height>
+            </size>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_12">
+            <item>
+             <widget class="QWidget" name="widget_17" native="true">
+              <property name="maximumSize">
+               <size>
+                <width>150</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_17">
+               <property name="topMargin">
+                <number>0</number>
                </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>27</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>153</width>
-                 <height>75</height>
-                </size>
-               </property>
-               <property name="dragEnabled">
-                <bool>false</bool>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_15">
-               <property name="spacing">
+               <property name="bottomMargin">
                 <number>0</number>
                </property>
                <item>
-                <widget class="QPushButton" name="Btn_InputObjAddr">
+                <widget class="QPushButton" name="Btn_ReadValueNum">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>30</height>
+                  </size>
+                 </property>
                  <property name="text">
-                  <string>输入信息体地址</string>
+                  <string>读定值区号</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QPushButton" name="Btn_ObjAddrClear">
-                 <property name="minimumSize">
+                <spacer name="verticalSpacer_2">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
                   <size>
                    <width>20</width>
-                   <height>0</height>
+                   <height>44</height>
                   </size>
                  </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>39</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>清空</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <widget class="QPushButton" name="Btn_ReadValue">
-               <property name="text">
-                <string>读参数</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-           <widget class="QWidget" name="layoutWidget">
-            <property name="geometry">
-             <rect>
-              <x>20</x>
-              <y>60</y>
-              <width>138</width>
-              <height>32</height>
-             </rect>
-            </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_12">
-             <item>
-              <widget class="QLineEdit" name="Edit_ValueNum">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>50</width>
-                 <height>30</height>
-                </size>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="Btn_SetValueNum">
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>30</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>切换定值区号</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-           <widget class="QWidget" name="widget_16" native="true">
-            <property name="geometry">
-             <rect>
-              <x>350</x>
-              <y>10</y>
-              <width>222</width>
-              <height>151</height>
-             </rect>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_15">
-             <property name="topMargin">
-              <number>0</number>
-             </property>
-             <property name="bottomMargin">
-              <number>0</number>
-             </property>
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_16">
-               <item>
-                <widget class="QLabel" name="label_5">
-                 <property name="text">
-                  <string>区号：</string>
-                 </property>
-                </widget>
+                </spacer>
                </item>
                <item>
-                <widget class="QLineEdit" name="Edit_WriteValueNum"/>
+                <layout class="QVBoxLayout" name="verticalLayout_16">
+                 <item>
+                  <widget class="QLineEdit" name="Edit_ValueNum">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>9</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>16666666</width>
+                     <height>30</height>
+                    </size>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="Btn_SetValueNum">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>30</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>切换定值区号</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </item>
               </layout>
-             </item>
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_18">
-               <property name="spacing">
+             </widget>
+            </item>
+            <item>
+             <widget class="QWidget" name="widget_10" native="true">
+              <property name="maximumSize">
+               <size>
+                <width>155</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_13">
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
                 <number>0</number>
                </property>
                <item>
-                <widget class="QTableView" name="tableView_WriteValue">
+                <layout class="QHBoxLayout" name="horizontalLayout_14">
+                 <item>
+                  <widget class="QLabel" name="label">
+                   <property name="text">
+                    <string> 区号：</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="Edit_ReadValueNum"/>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <widget class="QListView" name="listView_Addr">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
                  <property name="minimumSize">
                   <size>
-                   <width>150</width>
-                   <height>0</height>
+                   <width>0</width>
+                   <height>27</height>
                   </size>
                  </property>
                  <property name="maximumSize">
                   <size>
-                   <width>160</width>
-                   <height>16777215</height>
+                   <width>153</width>
+                   <height>75</height>
                   </size>
+                 </property>
+                 <property name="dragEnabled">
+                  <bool>false</bool>
                  </property>
                 </widget>
                </item>
                <item>
-                <layout class="QVBoxLayout" name="verticalLayout_14">
+                <layout class="QHBoxLayout" name="horizontalLayout_15">
                  <property name="spacing">
                   <number>0</number>
                  </property>
                  <item>
-                  <widget class="QPushButton" name="Btn_ValueAdd">
+                  <widget class="QPushButton" name="Btn_InputObjAddr">
+                   <property name="text">
+                    <string>输入信息体地址</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="Btn_ObjAddrClear">
                    <property name="minimumSize">
                     <size>
-                     <width>0</width>
+                     <width>20</width>
                      <height>0</height>
                     </size>
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>50</width>
-                     <height>16777215</height>
-                    </size>
-                   </property>
-                   <property name="text">
-                    <string>添加</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="Btn_ValueClear">
-                   <property name="maximumSize">
-                    <size>
-                     <width>50</width>
+                     <width>39</width>
                      <height>16777215</height>
                     </size>
                    </property>
@@ -1084,47 +1014,168 @@ QTabBar::tab{height:50}</string>
                    </property>
                   </widget>
                  </item>
+                </layout>
+               </item>
+               <item>
+                <widget class="QPushButton" name="Btn_ReadValue">
+                 <property name="text">
+                  <string>读参数</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QWidget" name="widget_16" native="true">
+              <property name="maximumSize">
+               <size>
+                <width>234</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_15">
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_16">
                  <item>
-                  <widget class="QRadioButton" name="radioButton_nseq">
+                  <widget class="QLabel" name="label_5">
                    <property name="text">
-                    <string>离散</string>
+                    <string>区号：</string>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QRadioButton" name="radioButton_seq">
-                   <property name="text">
-                    <string>顺序</string>
+                  <widget class="QLineEdit" name="Edit_WriteValueNum"/>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_18">
+                 <property name="spacing">
+                  <number>2</number>
+                 </property>
+                 <item>
+                  <widget class="QTableView" name="tableView_WriteValue">
+                   <property name="minimumSize">
+                    <size>
+                     <width>150</width>
+                     <height>0</height>
+                    </size>
                    </property>
-                   <property name="checked">
-                    <bool>true</bool>
+                   <property name="maximumSize">
+                    <size>
+                     <width>160</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <layout class="QVBoxLayout" name="verticalLayout_14">
+                   <property name="spacing">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <widget class="QPushButton" name="Btn_ValueAdd">
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>50</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>添加</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="Btn_ValueClear">
+                     <property name="maximumSize">
+                      <size>
+                       <width>50</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>清空</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QRadioButton" name="radioButton_nseq">
+                     <property name="text">
+                      <string>离散</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QRadioButton" name="radioButton_seq">
+                     <property name="text">
+                      <string>顺序</string>
+                     </property>
+                     <property name="checked">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_17">
+                 <item>
+                  <widget class="QPushButton" name="Btn_Preset">
+                   <property name="text">
+                    <string>参数预置</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="Btn_PresetCancel">
+                   <property name="text">
+                    <string>取消预置</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="Btn_Curing">
+                   <property name="text">
+                    <string>参数固化</string>
                    </property>
                   </widget>
                  </item>
                 </layout>
                </item>
               </layout>
-             </item>
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_17">
-               <item>
-                <widget class="QPushButton" name="Btn_Preset">
-                 <property name="text">
-                  <string>参数预置</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="Btn_Curing">
-                 <property name="text">
-                  <string>参数固化</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-            </layout>
-           </widget>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_6">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>330</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
           </widget>
          </item>
          <item>
@@ -1136,11 +1187,182 @@ QTabBar::tab{height:50}</string>
         <attribute name="title">
          <string>电能量召唤</string>
         </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_18">
+         <item>
+          <widget class="QWidget" name="widget_18" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>50</height>
+            </size>
+           </property>
+           <widget class="QPushButton" name="Btn_EnergyCall">
+            <property name="geometry">
+             <rect>
+              <x>40</x>
+              <y>10</y>
+              <width>75</width>
+              <height>30</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>电能量召唤</string>
+            </property>
+           </widget>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTableView" name="tableView_EnergyCall"/>
+         </item>
+        </layout>
        </widget>
        <widget class="QWidget" name="tab_VersionUpdata">
         <attribute name="title">
          <string>软件升级</string>
         </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_19">
+         <item>
+          <widget class="QWidget" name="widget_19" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>100</height>
+            </size>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_22">
+            <property name="topMargin">
+             <number>5</number>
+            </property>
+            <property name="rightMargin">
+             <number>9</number>
+            </property>
+            <property name="bottomMargin">
+             <number>5</number>
+            </property>
+            <item>
+             <widget class="QWidget" name="widget_20" native="true">
+              <property name="minimumSize">
+               <size>
+                <width>430</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>430</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_20">
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_21">
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_19">
+                   <item>
+                    <widget class="QLineEdit" name="Edit_VersionFile">
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>30</height>
+                      </size>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="Btn_SelectVersionFile">
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>30</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>选择升级文件</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="Btn_UpdataVersion">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>30</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>30</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>软件升级</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_20">
+                 <item>
+                  <widget class="QProgressBar" name="progressBar_Updata">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>25</height>
+                    </size>
+                   </property>
+                   <property name="value">
+                    <number>24</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="Btn_UpdataStop">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>30</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>中断升级</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_7">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>451</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTableView" name="tableView"/>
+         </item>
+        </layout>
        </widget>
       </widget>
       <widget class="QTabWidget" name="LogWidget">

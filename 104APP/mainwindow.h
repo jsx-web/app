@@ -46,6 +46,7 @@ private:
     QStandardItemModel* remotevaluemodel;
     QStringList list;
     QStandardItemModel* writevaluemodel;
+    QStandardItemModel* energycallmodel;
 
 private:
     void Init();
@@ -64,7 +65,7 @@ private slots:
     //--------根据model写入数据----
     void slotUpdataTableView(int modelID,int modellen,QStringList data);
     //---------总召数据显示--------
-    void slotShowDataTotalCall(int packid,QString T1,QString obj_addr,QString data,QString QDS,QStringList TimeList);
+    void slotShowDataTotalCall(int packid,QString T1,QString obj_addr,QString data,QString QDS,QString TimeList);
     //--------时钟控制的显示------
     void slotColckControl(int operation, char sender, QString Time);
     //--------复位的显示------
@@ -92,6 +93,8 @@ private slots:
                                 QString Value);
     //-------接收写参数的接收-----
     void slotDialogWriteValue(QString addr ,QString tag, QString value);
+    //----------电能量召唤数据显示---------
+    void slotShowDataEnergyCall(int packid,QString T1,QString obj_addr,QString data,QString QDS,QString TimeList);
 
 
 private slots:
@@ -134,6 +137,12 @@ private slots:
     void on_Btn_ValueClear_clicked();
 
     void on_Btn_Preset_clicked();
+
+    void on_Btn_PresetCancel_clicked();
+    
+    void on_Btn_Curing_clicked();
+
+    void on_Btn_EnergyCall_clicked();
 
 private:
     Ui::MainWindow *ui;

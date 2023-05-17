@@ -46,6 +46,8 @@ using namespace std;
 #define C_RR_NA_1 201   //读定值区号
 #define C_RS_NA_1 202   //读多个/全部参数
 #define C_WS_NA_1 203   //写参数和定值
+#define C_IC_NA_2 101   //电能量召唤命令
+#define F_SR_NA_1 211   //软件升级启动/结束
 
 
 //TabableView对应ModelID和Len

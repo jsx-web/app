@@ -33,12 +33,15 @@ private:
     FileOperation *wfileop;
     int ValueMAX;
     int ValueMIN;
+    bool isPerset;      //是否进行预置
 public:
     bool Signals_Slot;  //信号和信号槽连接标识
     unsigned char* GetrecvBuf();
     int GetBufLen();
     Terminal * GetTerminal();
     Frame GetSendFrame();
+    bool GetIsPerset();
+    void SetIsPerset(bool PerSet);
     void SessionClose();
     bool IsConnect();
     void SetRecvBuf(char* recv);
@@ -62,7 +65,7 @@ signals:
     //--------根据model写入数据----
     void UpdataTableView(int modelID,int modellen,QStringList data);
     //--------总召唤数据显示-------
-    void ShowDataTotalCall(int packid,QString T1,QString obj_addr,QString data,QString QDS,QStringList TimeList);
+    void ShowDataTotalCall(int packid,QString T1,QString obj_addr,QString data,QString QDS,QString TimeList);
     //--------时钟控制的显示------
     void ColckControl(int operation, char sender, QString Time);
     //--------复位的显示---------
@@ -81,6 +84,8 @@ signals:
    void RemoteValueControl(int operation, int ValueNum, int ValueMin, int ValueMax,
                                            unsigned char Flag,QString ObjAddr, unsigned char Tag,
                                            QString Value);
+   //----------电能量召唤数据显示---------
+   void ShowDataEnergyCall(int packid,QString T1,QString obj_addr,QString data,QString QDS,QString Time);
 
 public slots:
 
@@ -132,6 +137,20 @@ public:
     bool ReadValueSessionSuccess(int Value);
     //参数预置
     bool PersetSession(int ValueNum,int status,QStringList addr,QStringList tag,QStringList value);
+    bool PersetSessionSuccess(int ValueNum,int status);
+    //参数取消预置
+    bool PersetCancelSession(int ValueNum);
+    bool PersetCancelSessionSuccess(int ValueNum);
+    //参数固化
+    bool CuringSession(int ValueNum);
+    bool CuringSessionSuccess(int ValueNum);
+    //电能量召唤
+    bool EnergyCallSession();
+    bool EnergyCallSessionSuccess();
+    bool EnergyCallData(int packid,unsigned char T1,unsigned char* obj_addr,unsigned char* data);
+    //软件升级
+    bool UpdataVersionSession();
+    bool UpdataVersionSessionSuccess();
 
 };
 

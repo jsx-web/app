@@ -39,7 +39,10 @@ public:
     bool SetToggleFixedValueNum(int FixedValueNum);
     bool SetReadValue(int Value,QStringList ObjAddr);
     bool SetPerset(int ValueNum,int status,QStringList addrlsit,QStringList taglist,QStringList valuelist);
-
+    bool SetPersetCancel(int ValueNum);
+    bool SetCuring(int ValueNum);
+    bool SetEnergyCall();
+    bool SetUpdataStart();
 
 
 };
