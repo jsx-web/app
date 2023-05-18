@@ -1,0 +1,1005 @@
+#include "frame.h"
+
+Frame::Frame()
+{
+    memset(APCI,0,6);
+    APCI[0] = 0x68;
+    APDU = nullptr;
+    ASDU = nullptr;
+}
+
+Frame::Frame(char FrameTpye)
+{
+    memset(APCI,0,6);
+    APCI[0] = 0x68;
+    APDU = nullptr;
+    ASDU = nullptr;
+    type = FrameTpye;
+
+    if(FrameTpye == 'I')
+    {
+        //其他的APCI都是0，不过要保证
+        //第一个八位位组的第一位 bit= 0，APCI[2]&FE
+        //第三个八位位组的第一位 bit= 0，APCI[4]&FE
+    }
+    else if(FrameTpye == 'S')
+    {
+        APCI[1] = 4;
+        APCI[2] = S_BIT_1;// 00 00 00 01
+        APCI[4] = S_BIT_3;// 00 00 00 00
+
+    }else if(FrameTpye == 'U')
+    {
+         APCI[1] = 4;
+         APCI[2] = U_BIT_1;
+         APCI[4] = U_BIT_3;
+    }
+}
+
+Frame::~Frame()
+{
+    delete ASDU;
+    delete APDU;
+}
+
+unsigned char *Frame::GetAPDU()
+{
+    if(APDU == nullptr) {cout << "APDU is NULL" <<endl;}
+    return APDU;
+}
+
+unsigned char *Frame::GetAPCI()
+{
+    return APCI;
+}
+
+unsigned char *Frame::GetASDU()
+{
+    if(ASDU == nullptr) {cout << "ASDU is NULL" <<endl;}
+    return ASDU;
+}
+
+bool Frame::setAPDU()
+{
+    cout << "=================" << __FUNCTION__ << "=========" << endl;
+    int len = APCI[1] - 4;
+    if(len != 2)
+    {
+        APDU = new unsigned char[len+6];
+        memset(APDU,0,len+6);
+        my_strncpy((char*)APDU,(char*)APCI,6);
+        if(strncmp((char*)APDU,(char*)APCI,6)!=0)
+        {
+            return false;
+        }
+        my_strncpy((char*)APDU+6,(char*)ASDU,len);
+        if(strncmp((char*)APDU+6,(char*)ASDU,len)!=0)
+        {
+            return false;
+        }
+    }
+    else
+    {
+        APDU = new unsigned char[6];
+        memset(APDU,0,6);
+        my_strncpy((char*)APDU,(char*)APCI,6);
+        if(strncmp((char*)APDU,(char*)APCI,6)!=0)
+        {
+            return false;
+        }
+    }
+
+    cout << "APCI: " ;
+    show_hex((char*)APCI,6);
+    cout << "ASDU: " ;
+    show_hex((char*)ASDU,len);
+    cout << "APDU: " ;
+    show_hex((char*)APDU,len+6);
+    cout << "==================================" <<endl;
+    return true;
+}
+
+int Frame::Getlen()
+{
+    return APCI[1]+2;
+}
+
+char Frame::GerTpye()
+{
+    return type;
+}
+
+bool Frame::setSFrame(int VS, int ACK)
+{
+    type = 'S';
+    //STARTDT:ACT=1 CON=0
+    //68 04 00 00 00 00
+    APCI[2] = (VS&0x7f)<<1;
+    APCI[3] = (VS>>7)&0xff;
+    APCI[4] = (ACK&0x7f)<<1;
+    APCI[5] = (ACK>>7)&0xff;
+    return setAPDU();
+}
+
+void Frame::updataCON(int VS, int ACK)
+{
+    APDU[2] = (VS&0x7f)<<1;
+    APDU[3] = (VS>>7)&0xff;
+    APDU[4] = (ACK&0x7f)<<1;
+    APDU[5] = (ACK>>7)&0xff;
+}
+
+bool Frame::setTestFrame()
+{
+    type = 'U';
+    //STARTDT:ACT=1 CON=0
+    //68 04 43 00 00 00
+    APCI[2] = U_BIT_1_TEST_CON;
+    return setAPDU();
+}
+
+bool Frame::SetinitFrame()
+{
+
+    type = 'U';
+    //STARTDT:ACT=1 CON=0
+    //68 04 07 00 00 00
+    APCI[2] = U_BIT_1_START_CON;
+    return setAPDU();
+}
+
+bool Frame::SetTotalCall()
+{
+    //68 0e 00 00 00 00 64 01 06 00 01 00 00 00 00 14
+    /*
+    起始字节=68 数据单元长度(APDU)=14 I格式帧 发送序号(NS)=0 接收序号(NR)=0
+    TI= 100
+    VSQ=01  ----> SQ=0 INFONUM=1
+    COT= 06 ----> T=0 PN=0 CAUSE =6
+    COA =1 C_IC_NA_1
+    */
+    APCI[1] = 14;
+    int len = APCI[1] - 4;
+    cout << endl << __FUNCTION__ << endl;
+    cout << "length: " << len << endl;
+    ASDU = new unsigned char[len];
+    memset(ASDU,0,len);
+    //类型标识符 T1
+    ASDU[0] = C_IC_NA_1;
+    //可变帧长限定词 VSQ
+    ASDU[1] = 0x01;
+    //传送原因 COT(2字节)
+    ASDU[2] = 0x06; //ASDU[3] = 0x00;
+    //ASDU 公共地址(2字节)
+    ASDU[4] = 0x01; // ASDU[5] = 0x00;
+    //ASDU 信息对象地址（=0）(3字节)
+    //ASDU[6] = 0x00;  ASDU[7] = 0x00; ASDU[8] = 0x00;
+    //ASDU 召唤限定词 QOI
+    ASDU[9] = 20;
+
+    return setAPDU();
+}
+
+bool Frame::SetClockSyn()
+{
+    /*
+    68（启动符）14（长度:20）00 00（发送序号,I 帧，C_CS_NA_1）00 00（接收序号,10）
+    67（类型标示：时钟同步,103）01（可变结构限定词,SQ = 0 ：信息对象的地址不连续;信息对象的个数为1）
+    06 00（传输原因：激活）01 00（公共地址）
+    00 00 00（信息体地址）
+    01（毫秒低位）02（毫秒高位）03（分钟）04（时）81（日与星期）09（月）10（年）
+    -----------------------------------------------------------------
+    68 14 00 00 00 00
+    67 01
+    06 00 01 00
+    00 00 00
+    0x01 0x02 0x03 0x04 0x81 0x09 0x10
+    */
+    APCI[1] = 0x14; // 1+1+4+1+1+2+2+3+7 - 2 = 20
+    int len = APCI[1] - 4;
+    cout << endl << __FUNCTION__ << endl;
+    cout << "length: " << len << endl;
+    ASDU = new unsigned char[len];
+    memset(ASDU,0,len);
+    //类型标识符 T1 = 103
+    ASDU[0] = C_CS_NA_1;
+    //可变帧长限定词 VSQ = 1
+    ASDU[1] = 0x01;
+    //传送原因 COT(2字节)
+    ASDU[2] = 0x06; //ASDU[3] = 0x00;
+    //ASDU 公共地址(2字节)
+    ASDU[4] = 0x01; // ASDU[5] = 0x00;
+    //ASDU 信息体地址（=0）(3字节)
+    //ASDU[6] = 0x00;  ASDU[7] = 0x00; ASDU[8] = 0x00;
+    //ASDU 时标char CP56Time2a[7] = {ASDU[9]~ASDU[15]}
+    unsigned char CP56Time2a[7] = {0x01,0x02,0x03,0x04,0x81,0x09,0x10};
+    for(int i = 9; i<16 ; i++)
+    {
+        ASDU[i] = CP56Time2a[i-9];
+    }
+    return setAPDU();
+}
+
+bool Frame::SetClockRead()
+{
+    /*
+    68 14 00 00 00 00
+    67 01
+    05 00 01 00
+    00 00 00
+    0x00 0x00 0x00 0x00 0x00 0x00 0x00
+    */
+    APCI[1] = 0x14; // 1+1+4+1+1+2+2+3+7 - 2 = 20
+    int len = APCI[1] - 4;
+    cout << endl << __FUNCTION__ << endl;
+    cout << "length: " << len << endl;
+    ASDU = new unsigned char[len];
+    memset(ASDU,0,len);
+    //类型标识符 T1 = 103
+    ASDU[0] = C_CS_NA_1;
+    //可变帧长限定词 VSQ = 1
+    ASDU[1] = 0x01;
+    //传送原因 COT(2字节)
+    ASDU[2] = 0x05; //ASDU[3] = 0x00;
+    //ASDU 公共地址(2字节)
+    ASDU[4] = 0x01; // ASDU[5] = 0x00;
+    //ASDU 信息体地址（=0）(3字节)
+    //ASDU[6] = 0x00;  ASDU[7] = 0x00; ASDU[8] = 0x00;
+    //ASDU 时标char CP56Time2a[7] = {ASDU[9]~ASDU[15]}
+    return setAPDU();
+}
+
+bool Frame::SetReset()
+{
+    /*
+    68 0e 00 00 00 00 69 01 06 00 01 00 00 00 00 01
+    T1 = C_RP_NA_1(105) 复位进程命令
+    VSQ = 0x01
+    COT = 0x06 0x00
+    ASDU 公共地址 = 0x01 0x00
+    信息对象地址 = 0x00 0x00 0x00
+    复位进程命令限定词 QRP = 0x01 (进程的总复位)
+    */
+    APCI[1] = 0x0e; // 1+1+4+1+1+2+2+3+1 - 2 = 14
+    int len = APCI[1] - 4;
+    cout << endl << __FUNCTION__ << endl;
+    cout << "length: " << len << endl;
+    ASDU = new unsigned char[len];
+    memset(ASDU,0,len);
+    //类型标识符 T1 = 103
+    ASDU[0] = C_RP_NA_1;
+    //可变帧长限定词 VSQ = 1
+    ASDU[1] = 0x01;
+    //传送原因 COT(2字节)
+    ASDU[2] = 0x06; //ASDU[3] = 0x00;
+    //ASDU 公共地址(2字节)
+    ASDU[4] = 0x01; // ASDU[5] = 0x00;
+    //ASDU 信息体地址（=0）(3字节)
+    //ASDU[6] = 0x00;  ASDU[7] = 0x00; ASDU[8] = 0x00;
+    ASDU[9] = 0x01;
+    return setAPDU();
+}
+
+bool Frame::SetDirCall(char* DirName,char CallFlage,st_cp56time2a start,st_cp56time2a end)
+{
+    /*
+    68 2b 04 00 0A 00		->APCI
+
+    D2 00  ->T1 = F_FR_NA_1(210)
+    06 00  ->  COT
+    01 00  -> ASDU_addr
+    00 00 00 -->obj_addr
+
+    02  ->附加数据包类型(2:文件传输)
+    01 	->读目录
+    00 00 00 00 	->目录ID
+    08	-> 目录长度
+
+    name[8] = {}	->目录名(不带结束符) 00 00 00 00 00 00 00 00
+
+    00	->召唤标识(0:目录下所有文件，1:目录下满足搜索时间段的文件)
+    00 00 00 00 00 00 00 		-> 查询起始时间(CP56Time2a)
+    00 00 00 00 00 00 00 		-> 查询终止时间(CP56Time2a)
+    */
+    // len = 6 + 9 + 6 + x + 15 - 2 = 35+x (x==8?43(0x2b):0x23+x)
+    APCI[1] = 0x23 + strlen(DirName);
+    int len = APCI[1] - 4;//ASDU的长度
+    cout << endl << __FUNCTION__ << endl;
+    cout << "length: " << len << endl;
+    ASDU = new unsigned char[len];
+    memset(ASDU,0,len);
+    //类型标识符 T1 = 310
+    ASDU[0] = F_FR_NA_1;
+    //可变帧长限定词 VSQ = 0  I格式无效
+    ASDU[1] = 0x00;
+    //传送原因 COT(2字节)
+    ASDU[2] = 0x06; //ASDU[3] = 0x00;
+    //ASDU 公共地址(2字节)
+    ASDU[4] = 0x01; // ASDU[5] = 0x00;
+    //ASDU 信息体地址（=0）(3字节)
+    //ASDU[6] = 0x00;  ASDU[7] = 0x00;ASDU[8] = 0x02;
+    //ASDU[9~end];
+    int index = 9;
+    ASDU[index] = 0x02;
+    ASDU[index+1] = 0x01;
+    //ASDU[10]= 0x00;ASDU[11] = 0x00;
+    //ASDU[12] = 0x00;ASDU[13] = 0x00;
+    ASDU[index+1+5] = strlen(DirName);
+    int length = strlen(DirName);
+    my_strncpy(ASDU+(index+1+5+1),DirName,length);
+    ASDU[(index+7)+length] = (unsigned char)CallFlage;
+    char time_start[7];
+    char time_end[7];
+    cp56time2a_to_char(time_start,start);
+    cp56time2a_to_char(time_end,end);
+    my_strncpy(ASDU+((index+7)+length+1),time_start,7);
+    my_strncpy(ASDU+((index+7)+length+1+7),time_end,7);
+    return setAPDU();
+}
+
+bool Frame::SetReadFile(char *FileName)
+{
+    /*
+    68 20 00 00 00 00		->APCI
+
+    D2 00  ->T1 = F_FR_NA_1(210)
+    06 00  ->  COT
+    01 00  -> ASDU_addr
+    00 00 00 -->obj_addr
+
+    02  ->附加数据包类型(2:文件传输)
+    03 	->读文件激活
+    08	-> 文件名长度
+
+    name[8] = {}	->目录名(不带结束符) 00 00 00 00 00 00 00 00
+    */
+    //6 + 9 + 3 + x - 2 = 16+x
+
+    APCI[1] = 0x10 + strlen(FileName);
+    int len = APCI[1] - 4;//ASDU的长度
+    cout << endl << __FUNCTION__ << endl;
+    cout << "length: " << len << endl;
+    ASDU = new unsigned char[len];
+    memset(ASDU,0,len);
+    //类型标识符 T1 = 310
+    ASDU[0] = F_FR_NA_1;
+    //可变帧长限定词 VSQ = 0  I格式无效
+    ASDU[1] = 0x00;
+    //传送原因 COT(2字节)
+    ASDU[2] = 0x06; //ASDU[3] = 0x00;
+    //ASDU 公共地址(2字节)
+    ASDU[4] = 0x01; // ASDU[5] = 0x00;
+    //ASDU 信息体地址（=0）(3字节)
+    //ASDU[6] = 0x00;  ASDU[7] = 0x00;ASDU[8] = 0x02;
+    //ASDU[9~end];
+    int index = 9;
+    ASDU[index] = 0x02;
+    ASDU[index+1] = 0x03;
+    ASDU[index+2] = strlen(FileName);
+    int str_len = strlen(FileName);
+    my_strncpy(ASDU+(index+3),FileName,str_len);
+    return setAPDU();
+}
+
+bool Frame::SetWriteFile(char *FileNamePath)
+{
+    /*
+    68 20 00 00 00 00		->APCI
+
+    D2 00  ->T1 = F_FR_NA_1(210)
+    06 00  ->  COT
+    01 00  -> ASDU_addr
+    00 00 00 -->obj_addr
+
+    02  ->附加数据包类型(2:文件传输)   -> 15
+    07 	->读文件激活
+    09	-> 文件名长度
+
+    name[8] = {}	->文件名(不带结束符) 00 00 00 00 00 00 00 00
+    00 00 00 00     ->文件标识，低字节在前    ->18+a[17]
+    00 00 00 00     ->文件大小,文件内容的字节数，便于传输结束后的简单校验，低字节在前
+    */
+    //68 20 00 00 00 00 D2 00 06 00 01 00 00 00 00 02 07 01 31 00 00 00 00 00 00 00 00
+    // 6+9+3+8+x  - 2 = 26-2 +x = 24 + x
+
+    QStringList list = QString(FileNamePath).split("/");//QString字符串分割函数
+    //qDebug() << "list: " <<list;
+    QString end = list.last();
+    //qDebug() << "end: " <<end;
+
+    APCI[1] = 0x18 + strlen(end.toUtf8().data());
+    int len = APCI[1] - 4;//ASDU的长度
+    cout << endl << __FUNCTION__ << endl;
+    cout << "length: " << len << endl;
+    ASDU = new unsigned char[len];
+    memset(ASDU,0,len);
+    //类型标识符 T1 = 310
+    ASDU[0] = F_FR_NA_1;
+    //可变帧长限定词 VSQ = 0  I格式无效
+    ASDU[1] = 0x00;
+    //传送原因 COT(2字节)
+    ASDU[2] = 0x06; //ASDU[3] = 0x00;
+    //ASDU 公共地址(2字节)
+    ASDU[4] = 0x01; // ASDU[5] = 0x00;
+    //ASDU 信息体地址（=0）(3字节)
+    //ASDU[6] = 0x00;  ASDU[7] = 0x00;ASDU[8] = 0x02;
+    //ASDU[9~end];
+    int index = 9;
+    ASDU[index] = 0x02;     //附加数据包类型(2:文件传输)
+    ASDU[index+1] = 0x07;   //写文件激活
+
+
+    ASDU[index+2] = strlen(end.toUtf8().data());
+    int str_len = strlen(end.toUtf8().data());
+    my_strncpy(ASDU+(index+3),end.toUtf8().data(),str_len);
+//    00 00 00 00     ->文件标识，低字节在前
+    unsigned char FlieID[4] = {0};
+    my_strncpy(ASDU+(index+3+str_len),FlieID,4);
+//    00 00 00 00     ->文件大小,文件内容的字节数，便于传输结束后的简单校验，低字节在前
+    unsigned char FlieSize[4] = {0};
+    QFile  *file = new QFile(FileNamePath);
+    if (file->open(QIODevice::ReadOnly)) {
+        quint16 n = file->size();
+        union Data
+        {
+            unsigned int a;
+            unsigned char filelong[4];
+        }datalong;
+        datalong.a=static_cast<int>(n);
+        //show_hex((char*)datalong.filelong,4);
+        my_strncpy(FlieSize,datalong.filelong,4);
+        //qDebug() << n << "----" << datalong.a;
+        //show_hex((char*)FlieSize,4);
+    } else {
+        qDebug() << "文件打开失败！";
+    }
+
+    my_strncpy(ASDU+(index+3+str_len+4),FlieSize,4);
+
+    return setAPDU();
+}
+
+
+bool Frame::SetWriteData(QString filepath, int &offset)
+{
+    /*
+    68 20 00 00 00 00		->APCI
+
+    D2 00  ->T1 = F_FR_NA_1(210)
+    06 00  ->  COT
+    01 00  -> ASDU_addr
+    00 00 00 -->obj_addr
+
+    02  ->附加数据包类型(2:文件传输)
+    09 	->读文件数据                     0~16
+
+    00 00 00 00     ->文件标识，低字节在前
+    00 00 00 00     ->数据段号
+    00              ->后续标志          0~25
+    data[x]         ->文件数据
+    04              ->校验码
+    */
+    //68 20 00 00 00 00 D2 00 06 00 01 00 00 00 00 02 07 01 31 00 00 00 00 00 00 00 00
+    // 6+9+2+8+1+1+x  - 2 = 27-2 +x = 25 + x
+    // maxdatalen = 228
+
+    QFile file(filepath);
+    int size = 0;
+    if (file.open(QIODevice::ReadOnly)) {
+        int n = file.size();
+        size = n-offset;
+        if(size > 228){size = 228;}
+        file.close();
+    } else {
+        qDebug() << "文件打开失败！";
+    }
+    file.close();
+
+    APCI[1] = 0x19 + size;
+    int len = APCI[1] - 4;//ASDU的长度
+    cout << endl << __FUNCTION__ << endl;
+    cout << "length: " << len << endl;
+    ASDU = new unsigned char[len];
+    memset(ASDU,0,len);
+    //类型标识符 T1 = 210
+    ASDU[0] = F_FR_NA_1;
+    //可变帧长限定词 VSQ = 0  I格式无效
+    ASDU[1] = 0x00;
+    //传送原因 COT(2字节)
+    ASDU[2] = 0x05; //ASDU[3] = 0x00;
+    //ASDU 公共地址(2字节)
+    ASDU[4] = 0x01; // ASDU[5] = 0x00;
+    //ASDU 信息体地址（=0）(3字节)
+    //ASDU[6] = 0x00;  ASDU[7] = 0x00;ASDU[8] = 0x02;
+    //ASDU[9~end];
+    int index = 9;
+    ASDU[index] = 0x02;     //附加数据包类型(2:文件传输)
+    ASDU[index+1] = 0x09;   //写文件数据
+
+    //00 00 00 00     ->文件标识，低字节在前
+    unsigned char FlieID[4] = {0};
+    my_strncpy(ASDU+(index+2),FlieID,4);
+    //数据段号
+    union Date
+    {
+        unsigned int n;
+        unsigned char offset[4];
+    }fileoffset;
+
+    //后续标志
+    char continueflag;
+    //文件数据
+    unsigned char *data = new unsigned char[size];
+    //校验码
+    char crc;
+    FileOperation a;
+    offset = a.readFile(filepath,offset,continueflag,&data,crc);
+
+    fileoffset.n = offset;
+    my_strncpy(ASDU+(index+2+4),fileoffset.offset,4);
+    ASDU[index+2+4+4] = (unsigned char)continueflag;
+    my_strncpy(ASDU+(index+2+4+4+1),data,size);
+    ASDU[index+2+4+4+1+size] = (unsigned char)crc;
+
+
+    return setAPDU();
+
+}
+
+bool Frame::SetReadFixedValueNum()
+{
+    //68 0e 00 00 00 00
+    //64 01
+    //06 00
+    //01 00
+    //00 00 00
+    //68 0d 00 00 00 00 C9 01 06 00 01 00 00 00 00
+    /*
+    起始字节=68 数据单元长度(APDU)=14 I格式帧 发送序号(NS)=0 接收序号(NR)=0
+    TI= C_RR_NA_1
+    VSQ=01  ----> SQ=0 INFONUM=1
+    COT= 06 ----> T=0 PN=0 CAUSE =6
+    COA =1 C_IC_NA_1
+    */
+    APCI[1] = 13;
+    int len = APCI[1] - 4;
+    cout << endl << __FUNCTION__ << endl;
+    cout << "length: " << len << endl;
+    ASDU = new unsigned char[len];
+    memset(ASDU,0,len);
+    //类型标识符 T1
+    ASDU[0] = C_RR_NA_1;
+    //可变帧长限定词 VSQ
+    ASDU[1] = 0x01;
+    //传送原因 COT(2字节)
+    ASDU[2] = 0x06; //ASDU[3] = 0x00;
+    //ASDU 公共地址(2字节)
+    ASDU[4] = 0x01; // ASDU[5] = 0x00;
+    //ASDU 信息对象地址（=0）(3字节)
+    //ASDU[6] = 0x00;  ASDU[7] = 0x00; ASDU[8] = 0x00;
+
+    return setAPDU();
+}
+
+bool Frame::SetToggleFixedValueNum(int FixedValueNum)
+{
+    //68 0f 00 00 00 00
+    //C8 01
+    //06 00
+    //01 00
+    //00 00 00
+    //00 00
+    //68 0f 00 00 00 00 C8 01 06 00 01 00 00 00 00 00 00
+    /*
+    起始字节=68 数据单元长度(APDU)=14 I格式帧 发送序号(NS)=0 接收序号(NR)=0
+    TI= C_SR_NA_1
+    VSQ=01  ----> SQ=0 INFONUM=1
+    COT= 06 ----> T=0 PN=0 CAUSE =6
+    COA =1 C_IC_NA_1
+    */
+    APCI[1] = 15;
+    int len = APCI[1] - 4;
+    cout << endl << __FUNCTION__ << endl;
+    cout << "length: " << len << endl;
+    ASDU = new unsigned char[len];
+    memset(ASDU,0,len);
+    //类型标识符 T1
+    ASDU[0] = C_SR_NA_1;
+    //可变帧长限定词 VSQ
+    ASDU[1] = 0x01;
+    //传送原因 COT(2字节)
+    ASDU[2] = 0x06; //ASDU[3] = 0x00;
+    //ASDU 公共地址(2字节)
+    ASDU[4] = 0x01; // ASDU[5] = 0x00;
+    //ASDU 信息对象地址（=0）(3字节)
+    //ASDU[6] = 0x00;  ASDU[7] = 0x00; ASDU[8] = 0x00;
+    ASDU[9] = FixedValueNum&0xff;
+    ASDU[10] = (FixedValueNum>>8)&0xff;
+
+    return setAPDU();
+}
+
+bool Frame::SetReadValue(int Value, QStringList ObjAddr)
+{
+    //68 0f 00 00 00 00
+    //CA 01
+    //06 00
+    //01 00
+    //05 00     ----->定值区号
+    //01 50 00  ----->信息体地址列表
+    //68 0f 00 00 00 00 CA 01 06 00 01 00 00 00 00 05 00
+    cout << endl << __FUNCTION__ << endl;
+    int size = ((ObjAddr.size()==0)?1:ObjAddr.size());
+    APCI[1] = 12+3*size;       //长度可变
+    int len = APCI[1] - 4;
+    cout << "length: " << len << endl;
+    ASDU = new unsigned char[len];
+    memset(ASDU,0,len);
+    //类型标识符 T1
+    ASDU[0] = C_RS_NA_1;
+    //可变帧长限定词 VSQ
+    if(ObjAddr.isEmpty()) {ASDU[1] = 0x85;} //顺序地址,有5个信息体,根据区号读取区号下全部参数
+    else
+    {
+        unsigned char num = size;
+        ASDU[1] = num;
+    }
+
+    //传送原因 COT(2字节)
+    ASDU[2] = 0x06; //ASDU[3] = 0x00;
+    //ASDU 公共地址(2字节)
+    ASDU[4] = 0x01; // ASDU[5] = 0x00;
+    //定值区号SN
+    ASDU[6] = Value&0x00ff;ASDU[7] = (Value&0xff00)>>8;
+
+    //ASDU 信息对象地址（=0）(3字节)
+    //ASDU[8] = 0x00;  ASDU[9] = 0x00; ASDU[10] = 0x00;
+    if(ObjAddr.isEmpty())//顺序地址,有5个信息体,根据区号读取区号下全部参数
+    {
+        ASDU[8] = 0x01;
+        ASDU[9] = Value<<4; //
+        ASDU[10] = 0x00;
+    }
+    else
+    {
+        int i = 0;
+        for(QString obj: ObjAddr)
+        {
+            obj.remove(QRegExp("\\s"));
+            qDebug() << obj;
+            printf("%s - %d\n",obj.toUtf8().data(),strlen(obj.toUtf8().data()));
+            char *dest;
+            str_to_char(&dest,obj.toUtf8().data(),6);
+            show_hex(dest,3);
+            ASDU[8+i*3] = dest[0];
+            ASDU[9+i*3] = dest[1];
+            ASDU[10+i*3] = dest[2];
+            i++;
+        }
+        cout << endl;
+    }
+    return setAPDU();
+}
+
+bool Frame::SetPerset(int ValueNum, int status, QStringList addrlist, QStringList taglist, QStringList valuelist)
+{
+    //68 23 00 00 00 00
+    //CB 01
+    //06 00
+    //01 00
+    //05 00     ----->定值区号
+    //01 50 00  ----->信息体地址列表
+    //68 17 00 00 00 00 cb 82 07 00 01 00 08 00 80 01 02 01 10 01 02 02 02 12 30
+    cout << endl << __FUNCTION__ << endl;
+    unsigned char *obj_addr = new unsigned char[3];
+    int addrsize = 0;
+    if(status == 1)
+    {
+        char *tmp;
+        QString No1 = addrlist.first();
+        str_to_char(&tmp,No1.toUtf8().data(),6);
+        my_strncpy(obj_addr,tmp,3);
+        addrsize = 3;
+    }
+    else
+    {
+        addrsize = 3*addrlist.size();
+    }
+
+    int valuetotalsize = 0;
+    int count = 0;
+    for(QString value:valuelist)
+    {
+        int len = value.size();
+//        cout << "len: " << len << endl;
+        valuetotalsize += (len%2)?((len+1)/2):(len/2);
+        count++;
+    }
+//    cout << "addrsize: " << addrsize << endl;
+//    cout << "valuetotalsize: " << valuetotalsize << endl;
+//    cout << "count: " << count << endl;
+    unsigned char VSQ = 0x00;
+    if(status == 1){VSQ = status<<7;}
+    VSQ = VSQ|(count&0x7f);
+//    printf("VSQ: %02x\n",VSQ);
+
+    APCI[1] = 13+addrsize+2*count+valuetotalsize;       //长度可变
+    int len = APCI[1] - 4;
+    cout << "length: " << len << endl;
+    ASDU = new unsigned char[len];
+    memset(ASDU,0,len);
+    //类型标识符 T1 = 203
+    ASDU[0] = C_WS_NA_1;
+    //可变帧长限定词 VSQ
+    ASDU[1] = VSQ;
+    //传送原因 COT(2字节)
+    ASDU[2] = 0x06; //ASDU[3] = 0x00;
+    //ASDU 公共地址(2字节)
+    ASDU[4] = 0x01; // ASDU[5] = 0x00;
+    //定值区号SN
+    ASDU[6] = ValueNum&0x00ff;ASDU[7] = (ValueNum&0xff00)>>8;
+    //参数特征标识
+    ASDU[8] = 0x80;
+
+    //ASDU 信息对象地址（=0）(3字节)
+    //ASDU[8] = 0x00;  ASDU[9] = 0x00; ASDU[10] = 0x00;
+    if(status == 1)//顺序地址,有5个信息体,根据区号读取区号下全部参数
+    {
+        ASDU[9] = obj_addr[0];
+        ASDU[10] = obj_addr[1];
+        ASDU[11] = obj_addr[2];
+        int j = 0;
+        for(int i = 0;i<count;i++)
+        {
+            QString TAG = taglist[i];
+            unsigned char tag;
+            tag = TAG.toInt();
+            printf("tag: %02x\n",tag);
+            QString value = valuelist[i];
+            int size = value.size();
+            size = (size%2)?((size+1)/2):(size/2);
+            unsigned char len = size;
+//            printf("len: %02x\n",len);
+            char *Uvalue;
+            str_to_char(&Uvalue,value.toUtf8().data(),value.size());
+//            printf("Uchar: ");
+//            show_hex(Uvalue,size);
+            ASDU[12+j] = tag;
+            ASDU[13+j] = len;
+            my_strncpy(ASDU+14+j,Uvalue,size);
+            j += (2+len);
+        }
+        cout << endl;
+    }
+    else
+    {
+
+        int j = 0;
+        for(int i = 0;i<count;i++)
+        {
+            QString ADDR = addrlist[i];
+            char *addr;
+            str_to_char(&addr,ADDR.toUtf8().data(),6);
+//            printf("addr: %02x %02x %02x\n",addr[0],addr[1],addr[2]);
+            QString TAG = taglist[i];
+            char *tag;
+            str_to_char(&tag,TAG.toUtf8().data(),2);
+//            printf("tag: %02x\n",*tag);
+            QString value = valuelist[i];
+            int size = value.size();
+            size = (size%2)?((size+1)/2):(size/2);
+            unsigned char len = size;
+//            printf("len: %02x\n",len);
+            char *Uvalue;
+            str_to_char(&Uvalue,value.toUtf8().data(),value.size());
+//            printf("Uchar: ");
+//            show_hex(Uvalue,size);
+            ASDU[9+j] = addr[0];
+            ASDU[10+j] = addr[1];
+            ASDU[11+j] = addr[2];
+            ASDU[12+j] = (unsigned char)*tag;
+            ASDU[13+j] = len;
+            my_strncpy(ASDU+14+j,Uvalue,size);
+            j += (2+len+3);
+        }
+        cout << endl;
+    }
+
+    return setAPDU();
+}
+
+bool Frame::SetPersetCancel(int ValueNum)
+{
+    //68 23 00 00 00 00
+    //CB 01
+    //06 00
+    //01 00
+    //05 00     ----->定值区号
+    //04  ----->特征标识
+    //68 0d 00 00 00 00 cb 00 08 00 01 00 08 00 40
+    cout << endl << __FUNCTION__ << endl;
+    APCI[1] = 13;       //长度可变
+    int len = APCI[1] - 4;
+    cout << "length: " << len << endl;
+    ASDU = new unsigned char[len];
+    memset(ASDU,0,len);
+    //类型标识符 T1 = 203
+    ASDU[0] = C_WS_NA_1;
+    //可变帧长限定词 VSQ
+    ASDU[1] = 0x00; 
+
+    //传送原因 COT(2字节)
+    ASDU[2] = 0x08; //ASDU[3] = 0x00;
+    //ASDU 公共地址(2字节)
+    ASDU[4] = 0x01; // ASDU[5] = 0x00;
+    //定值区号SN
+    ASDU[6] = ValueNum&0x00ff;ASDU[7] = (ValueNum&0xff00)>>8;
+    //参数特征标识
+    ASDU[8] = 0x40; //取消预置(S/E = 0,CR = 1,COT = 0)
+
+    return setAPDU();
+}
+
+bool Frame::SetCuring(int ValueNum)
+{
+    //68 23 00 00 00 00
+    //CB 01
+    //06 00
+    //01 00
+    //05 00     ----->定值区号
+    //04  ----->特征标识
+    //68 0d 00 00 00 00 cb 00 06 00 01 00 08 00 00
+    cout << endl << __FUNCTION__ << endl;
+    APCI[1] = 13;       //长度可变
+    int len = APCI[1] - 4;
+    cout << "length: " << len << endl;
+    ASDU = new unsigned char[len];
+    memset(ASDU,0,len);
+    //类型标识符 T1 = 203
+    ASDU[0] = C_WS_NA_1;
+    //可变帧长限定词 VSQ
+    ASDU[1] = 0x00; 
+
+    //传送原因 COT(2字节)
+    ASDU[2] = 0x06; //ASDU[3] = 0x00;
+    //ASDU 公共地址(2字节)
+    ASDU[4] = 0x01; // ASDU[5] = 0x00;
+    //定值区号SN
+    ASDU[6] = ValueNum&0x00ff;ASDU[7] = (ValueNum&0xff00)>>8;
+    //参数特征标识
+    ASDU[8] = 0x00; //取消预置(S/E = 0,CR = 0,COT = 0)
+
+    return setAPDU();
+}
+
+bool Frame::SetEnergyCall()
+{
+    //68 0e 00 00 00 00
+    //65 01
+    //06 00
+    //01 00
+    //00 00 00    ----->addr
+    //05  ----->特征标识
+    //68 0e 00 00 00 00 65 01 06 00 01 00 00 00 00 05
+    cout << endl << __FUNCTION__ << endl;
+    APCI[1] = 14;       //长度可变
+    int len = APCI[1] - 4;
+    cout << "length: " << len << endl;
+    ASDU = new unsigned char[len];
+    memset(ASDU,0,len);
+    //类型标识符 T1 = 101
+    ASDU[0] = C_IC_NA_2;
+    //可变帧长限定词 VSQ
+    ASDU[1] = 0x01;
+
+    //传送原因 COT(2字节)
+    ASDU[2] = 0x06; //ASDU[3] = 0x00;
+    //ASDU 公共地址(2字节)
+    ASDU[4] = 0x01; // ASDU[5] = 0x00;
+    //ASDU 信息对象地址（=0）(3字节)
+    //ASDU[6] = 0x00;  ASDU[7] = 0x00; ASDU[8] = 0x00;
+    //ASDU 召唤限定词 QCC
+    ASDU[9] = 5;
+
+    return setAPDU();
+}
+
+bool Frame::SetUpdataStart()
+{
+    //68 0e 00 00 00 00
+    //d3 01
+    //06 00
+    //01 00
+    //00 00 00    ----->addr
+    //80  ----->命令类型
+    //68 0e 00 00 00 00 d3 00 06 00 01 00 00 00 00 80
+
+    cout << endl << __FUNCTION__ << endl;
+    APCI[1] = 14;       //长度可变
+    int len = APCI[1] - 4;
+    cout << "length: " << len << endl;
+    ASDU = new unsigned char[len];
+    memset(ASDU,0,len);
+    //类型标识符 T1 = 101
+    ASDU[0] = F_SR_NA_1;
+    //可变帧长限定词 VSQ
+    ASDU[1] = 0x00;
+
+    //传送原因 COT(2字节)
+    ASDU[2] = 0x06; //ASDU[3] = 0x00;
+    //ASDU 公共地址(2字节)
+    ASDU[4] = 0x01; // ASDU[5] = 0x00;
+    //ASDU 信息对象地址（=0）(3字节)
+    //ASDU[6] = 0x00;  ASDU[7] = 0x00; ASDU[8] = 0x00;
+    ASDU[9] = 0x80;
+
+    return setAPDU();
+}
+
+bool Frame::SetRunUpdata()
+{
+    //68 0e 00 00 00 00
+    //d3 01
+    //06 00
+    //01 00
+    //00 00 00    ----->addr
+    //80  ----->命令类型
+    //68 0e 00 00 00 00 d3 00 06 00 01 00 00 00 00 00
+
+    cout << endl << __FUNCTION__ << endl;
+    APCI[1] = 14;       //长度可变
+    int len = APCI[1] - 4;
+    cout << "length: " << len << endl;
+    ASDU = new unsigned char[len];
+    memset(ASDU,0,len);
+    //类型标识符 T1 = 101
+    ASDU[0] = F_SR_NA_1;
+    //可变帧长限定词 VSQ
+    ASDU[1] = 0x00;
+
+    //传送原因 COT(2字节)
+    ASDU[2] = 0x06; //ASDU[3] = 0x00;
+    //ASDU 公共地址(2字节)
+    ASDU[4] = 0x01; // ASDU[5] = 0x00;
+    //ASDU 信息对象地址（=0）(3字节)
+    //ASDU[6] = 0x00;  ASDU[7] = 0x00; ASDU[8] = 0x00;
+    ASDU[9] = 0x00;
+
+    return setAPDU();
+}
+
+bool Frame::SetAbandonUpdata()
+{
+    //68 0e 00 00 00 00
+    //d3 01
+    //06 00
+    //01 00
+    //00 00 00    ----->addr
+    //80  ----->命令类型
+    //68 0e 00 00 00 00 d3 00 06 00 01 00 00 00 00 00
+
+    cout << endl << __FUNCTION__ << endl;
+    APCI[1] = 14;       //长度可变
+    int len = APCI[1] - 4;
+    cout << "length: " << len << endl;
+    ASDU = new unsigned char[len];
+    memset(ASDU,0,len);
+    //类型标识符 T1 = 101
+    ASDU[0] = F_SR_NA_1;
+    //可变帧长限定词 VSQ
+    ASDU[1] = 0x00;
+
+    //传送原因 COT(2字节)
+    ASDU[2] = 0x08; //ASDU[3] = 0x00;
+    //ASDU 公共地址(2字节)
+    ASDU[4] = 0x01; // ASDU[5] = 0x00;
+    //ASDU 信息对象地址（=0）(3字节)
+    //ASDU[6] = 0x00;  ASDU[7] = 0x00; ASDU[8] = 0x00;
+    ASDU[9] = 0x00;
+
+    return setAPDU();
+}
+
+
+
+

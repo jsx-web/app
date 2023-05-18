@@ -47,6 +47,9 @@ private:
     QStringList list;
     QStandardItemModel* writevaluemodel;
     QStandardItemModel* energycallmodel;
+    QStandardItemModel* versionupdatamodel;
+    bool UpdataTransfer;
+
 
 private:
     void Init();
@@ -54,7 +57,7 @@ private:
     void IconInit();
     void ProgressBarInit();
 signals:
-
+    void UpdataStop();
 private slots:
     //---------建立连接槽函数------
     void slotConnectRet(int status,QString IP,qint16 Port);
@@ -96,6 +99,16 @@ private slots:
     //----------电能量召唤数据显示---------
     void slotShowDataEnergyCall(int packid,QString T1,QString obj_addr,QString data,QString QDS,QString TimeList);
 
+    //-------软件升级文件标签------------
+    void slotUpdataLabel(int status);
+    //----软件升级文件进度条最大值设置-----
+    void slotUpdataPorgressMax(int Max);
+    //-------软件升级文件Value值更新-----
+    void slotUpdataValue(int Value);
+    //-------文件传输完成--------------
+    void slotUpdataSuccess();
+    //-----------软件升级显示------------
+    void slotVersionUpdata(int operation,QString VersionFile,int status);
 
 private slots:
     void on_Btn_Connect_clicked();
@@ -144,12 +157,19 @@ private slots:
 
     void on_Btn_EnergyCall_clicked();
 
+    void on_Btn_SelectVersionFile_clicked();
+
+    void on_Btn_UpdataVersion_clicked();
+
+    void on_Btn_UpdataStop_clicked();
+
+    void on_Btn_RunUpdata_clicked();
+
+    void on_Btn_AbandonUpdata_clicked();
+
 private:
     Ui::MainWindow *ui;
     Session *session;
-
-
-
 
 };
 

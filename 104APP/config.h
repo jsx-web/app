@@ -67,7 +67,7 @@ using namespace std;
 //长期空闲状态下发送测试帧的超时
 #define FREETIMEOUT 20
 //测试帧发送间隔
-#define TESTTIME 25
+#define TESTTIME 12
 
 char* Uchar_to_char(char* &Dest,unsigned char* Src,int Size);
 void show_hex(char *buf , int len);

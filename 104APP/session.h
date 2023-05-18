@@ -20,11 +20,19 @@ public:
 private:
     unsigned char *recvBuf;
     InfoBuffer *recvInfoBuffer;
+    InfoBuffer *I_InfoBuffer;    //存放接收帧(I帧)
+    InfoBuffer *U_InfoBuffer;    //存放接收帧(U帧)
+    InfoBuffer *S_InfoBuffer;    //存放接收帧(S帧)
+
     int bufLen;
     bool isInit;                //初始化成功/失败
     bool isClose;               //会话关闭
     Terminal *SessionTerminal;  //会话的套接字
     Clock *t0;                  //t0:建立连接的超时的计时器
+    Clock *t1;                  //t1:发送或测试 APDU 的超时
+    Clock *t2;                  //t2:无数据报文时确认的超时，t2<t1
+    Clock *t3;                  //t3:长期空闲状态下发送测试帧的超时
+    Clock *test;                //发送测试帧的间隔
     Frame *SendFrame;
     //V（S）为发送状态变量，V（R）为接收状态变量，ACK为当前已经正确收到的所有I格式
     int V_S;    //发送状态变量
@@ -34,10 +42,15 @@ private:
     int ValueMAX;
     int ValueMIN;
     bool isPerset;      //是否进行预置
+    bool UpdataStop;    //软件升级终端
+    bool StartLevelUp;  //升级是否启动
+    QString VersionFileName;
+    bool WaitRecvTest;  //是否等待回复帧
 public:
     bool Signals_Slot;  //信号和信号槽连接标识
     unsigned char* GetrecvBuf();
     int GetBufLen();
+    bool GetStartLevelUp();
     Terminal * GetTerminal();
     Frame GetSendFrame();
     bool GetIsPerset();
@@ -77,18 +90,25 @@ signals:
     void ReadValue(int Value);//Value值更新信号
     void WriteMax(int maxSize);  //写文件最大值信号
     void WriteValue(int Value);//Value值更新信号
+    void UpdataMax(int Max);//软件升级最大值信号
+    void UpdataValue(int Value);//Value值更新信号
    //---------激活标签控制---------
    void ReadLabelEnable(int status);
    void WriteLabelEnable(int status);
+   void UpdataLabelEnable(int status);
    //-----远程参数读写-------------
    void RemoteValueControl(int operation, int ValueNum, int ValueMin, int ValueMax,
                                            unsigned char Flag,QString ObjAddr, unsigned char Tag,
                                            QString Value);
    //----------电能量召唤数据显示---------
    void ShowDataEnergyCall(int packid,QString T1,QString obj_addr,QString data,QString QDS,QString Time);
+   //----------软件升级文件传输完成-------
+   void UpdataSuccess();
+   //-----------软件升级显示------------
+   void VersionUpdata(int operation,QString VersionFile,int status);
 
 public slots:
-
+    void slotUpdataStop();
 public:
     //接收帧显示
     void updata_recv_edit(int author,unsigned char* data);
@@ -120,9 +140,9 @@ public:
     bool ReadFileSession(char* RFileName);
     bool ReadFileSessionSuccess(QString DirName=QString());
     //文件写入
-    Frame WriteFileSession(char* WFileName);
-    bool WriteFileSessionEnable(Frame &frame);
-    bool WriteFileSessionConfirm(Frame &frame,int offset);
+    Frame WriteFileSession(char* WFileName,int Operation);
+    bool WriteFileSessionEnable(Frame &frame,int Operation);
+    bool WriteFileSessionConfirm(Frame &frame,int offset,int Operation);
     bool WriteFileSessionSuccess(Frame &frame,QString filename);
     //------远程参数读写-------
     //读取定值区号
@@ -150,7 +170,14 @@ public:
     bool EnergyCallData(int packid,unsigned char T1,unsigned char* obj_addr,unsigned char* data);
     //软件升级
     bool UpdataVersionSession();
-    bool UpdataVersionSessionSuccess();
+    bool UpdataVersionTransferSession(QString VersionFile);
+    bool UpdataVersionSessionSuccess(QString VersionFile);
+    //传输成功后确认
+    bool RunUpdataSession();
+    bool RunUpdataSessionSuccess();
+    //传输成功后放弃
+    bool AbandonUpdataSession();
+    bool AbandonUpdataSessionSuccess();
 
 };
 

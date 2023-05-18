@@ -1230,15 +1230,6 @@ QTabBar::tab{height:50}</string>
             </size>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_22">
-            <property name="topMargin">
-             <number>5</number>
-            </property>
-            <property name="rightMargin">
-             <number>9</number>
-            </property>
-            <property name="bottomMargin">
-             <number>5</number>
-            </property>
             <item>
              <widget class="QWidget" name="widget_20" native="true">
               <property name="minimumSize">
@@ -1326,6 +1317,28 @@ QTabBar::tab{height:50}</string>
                   </widget>
                  </item>
                  <item>
+                  <widget class="QLabel" name="UpdataLabel">
+                   <property name="minimumSize">
+                    <size>
+                     <width>50</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>50</width>
+                     <height>50</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>未激活</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
                   <widget class="QPushButton" name="Btn_UpdataStop">
                    <property name="minimumSize">
                     <size>
@@ -1339,6 +1352,53 @@ QTabBar::tab{height:50}</string>
                   </widget>
                  </item>
                 </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QWidget" name="widget_21" native="true">
+              <layout class="QVBoxLayout" name="verticalLayout_21">
+               <property name="spacing">
+                <number>13</number>
+               </property>
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QPushButton" name="Btn_RunUpdata">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>30</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>确认升级</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="Btn_AbandonUpdata">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>30</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>放弃升级</string>
+                 </property>
+                </widget>
                </item>
               </layout>
              </widget>
@@ -1360,7 +1420,7 @@ QTabBar::tab{height:50}</string>
           </widget>
          </item>
          <item>
-          <widget class="QTableView" name="tableView"/>
+          <widget class="QTableView" name="tableView_VersionUpdata"/>
          </item>
         </layout>
        </widget>

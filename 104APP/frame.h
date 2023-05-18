@@ -33,7 +33,7 @@ public:
     bool SetReset();
     bool SetDirCall(char* DirName,char CallFlage = 0x00,st_cp56time2a start = {.Time = 0x00000000000000},st_cp56time2a end = {.Time = 0x00000000000000});
     bool SetReadFile(char* FileName);
-    bool SetWriteFile(char* FileName);
+    bool SetWriteFile(char* FileNamePath);
     bool SetWriteData(QString filepath,int &offset);
     bool SetReadFixedValueNum();
     bool SetToggleFixedValueNum(int FixedValueNum);
@@ -43,6 +43,8 @@ public:
     bool SetCuring(int ValueNum);
     bool SetEnergyCall();
     bool SetUpdataStart();
+    bool SetRunUpdata();
+    bool SetAbandonUpdata();
 
 
 };
