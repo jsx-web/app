@@ -9,7 +9,7 @@
 #include <QObject>
 #include <QFile>
 #include <QDir>
-#include <QTimer>
+
 
 
 using namespace std;
@@ -17,7 +17,7 @@ using namespace std;
 //帧的最大容量
 #define BUF_LEN 256
 //缓冲区的最大容量
-#define BUFFERSIZE 16
+#define BUFFERSIZE 128
 
 //I格式
 #define I_BIT_1 0x00

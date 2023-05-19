@@ -18,6 +18,7 @@ public:
     clock_t GetEnd();
     bool IsTimeOut();
     void Flash();
+    void Stop();
 
 };
 

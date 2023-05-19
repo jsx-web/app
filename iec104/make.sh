@@ -1,0 +1,1 @@
+g++ slave.cpp slavemain.cpp -o server

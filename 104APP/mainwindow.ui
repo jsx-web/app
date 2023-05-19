@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>950</width>
-    <height>755</height>
+    <width>952</width>
+    <height>630</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -44,7 +44,7 @@
 QTabBar::tab{height:50}</string>
        </property>
        <property name="currentIndex">
-        <number>8</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="tab_Connect">
         <attribute name="title">
@@ -271,7 +271,7 @@ QTabBar::tab{height:50}</string>
              <height>16777215</height>
             </size>
            </property>
-           <widget class="QPushButton" name="pushButton_5">
+           <widget class="QPushButton" name="Btn_Init_Clear">
             <property name="geometry">
              <rect>
               <x>110</x>
@@ -360,7 +360,7 @@ QTabBar::tab{height:50}</string>
              <string> 总召唤</string>
             </property>
            </widget>
-           <widget class="QPushButton" name="pushButton_7">
+           <widget class="QPushButton" name="Btn_TotalCall_Clear">
             <property name="geometry">
              <rect>
               <x>140</x>
@@ -437,7 +437,7 @@ QTabBar::tab{height:50}</string>
              <string>时钟同步</string>
             </property>
            </widget>
-           <widget class="QPushButton" name="pushButton_10">
+           <widget class="QPushButton" name="Btn_ClockRead_Clear">
             <property name="geometry">
              <rect>
               <x>290</x>
@@ -456,10 +456,10 @@ QTabBar::tab{height:50}</string>
              <string>清空</string>
             </property>
            </widget>
-           <widget class="QLabel" name="label_2">
+           <widget class="QLabel" name="label_Time">
             <property name="geometry">
              <rect>
-              <x>440</x>
+              <x>430</x>
               <y>10</y>
               <width>121</width>
               <height>31</height>
@@ -525,6 +525,25 @@ QTabBar::tab{height:50}</string>
             </property>
             <property name="text">
              <string> 开启复位</string>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="Btn_Reset_Clear">
+            <property name="geometry">
+             <rect>
+              <x>160</x>
+              <y>10</y>
+              <width>75</width>
+              <height>30</height>
+             </rect>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="text">
+             <string> 清空</string>
             </property>
            </widget>
           </widget>
@@ -1209,6 +1228,25 @@ QTabBar::tab{height:50}</string>
              <string>电能量召唤</string>
             </property>
            </widget>
+           <widget class="QPushButton" name="Btn_EnergyCall_Clear">
+            <property name="geometry">
+             <rect>
+              <x>130</x>
+              <y>10</y>
+              <width>75</width>
+              <height>30</height>
+             </rect>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>清空</string>
+            </property>
+           </widget>
           </widget>
          </item>
          <item>
@@ -1466,7 +1504,7 @@ QTabBar::tab{height:50}</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>950</width>
+     <width>952</width>
      <height>23</height>
     </rect>
    </property>

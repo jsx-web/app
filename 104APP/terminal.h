@@ -2,9 +2,11 @@
 #define TERMINAL_H
 
 
+#include <winSock2.h>
 #include <windows.h>
-#include <WinSock2.h>
 #include "config.h"
+
+
 
 class Terminal
 {

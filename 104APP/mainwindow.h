@@ -14,6 +14,7 @@
 #include <QAction>
 #include <QMovie>
 #include <QMessageBox>
+#include <QTime>
 
 #include "session.h"
 #include "dialog_writevalueadd.h"
@@ -49,6 +50,7 @@ private:
     QStandardItemModel* energycallmodel;
     QStandardItemModel* versionupdatamodel;
     bool UpdataTransfer;
+    QTimer *timer_calendar;//用来显示当前日期的定时器
 
 
 private:
@@ -56,13 +58,20 @@ private:
     void TableVeiwInit();
     void IconInit();
     void ProgressBarInit();
+    void TimeInit();
+private slots:
+    void timerUpdate();
 signals:
     void UpdataStop();
 private slots:
     //---------建立连接槽函数------
     void slotConnectRet(int status,QString IP,qint16 Port);
+    //----------测试帧接收判定槽函数----
+    void slotTestConfirm();
+    void slotTestConfirmSuccess();
+    void slotTestConfirmTimeOut();
     //-----------接收框显示--------
-    void slotappendData(int author,char type,QString data);
+    void slotAppendData(int author,QString type,QString data);
     //-----------更新调试框--------
     void slotUpdataDebugEidt(QString msg);
     //--------根据model写入数据----
@@ -166,6 +175,16 @@ private slots:
     void on_Btn_RunUpdata_clicked();
 
     void on_Btn_AbandonUpdata_clicked();
+
+    void on_Btn_Init_Clear_clicked();
+
+    void on_Btn_TotalCall_Clear_clicked();
+
+    void on_Btn_ClockRead_Clear_clicked();
+
+    void on_Btn_Reset_Clear_clicked();
+
+    void on_Btn_EnergyCall_Clear_clicked();
 
 private:
     Ui::MainWindow *ui;

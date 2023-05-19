@@ -21,9 +21,20 @@ using std::string;
 #define M_ME_NC_1 0x0D
 #define F_FR_NA_1 0xD2
 #define F_SUM_XX_1 23
+
+#define jsxTEST 1
+#define TEST 0
+#if jsxTEST
+#define FTP_PATH "/root/project/tcp/app104/app/"
+#define FTP_PATH_FILE "/root/project/tcp/app104/app/iec104/"
+#define FTP_PATH_RE_FILE "/root/project/tcp/app104/app/"
+#endif
+
+#if TEST
 #define FTP_PATH "/mnt/d/XIAOD/XIAOH/code/"
 #define FTP_PATH_FILE "/mnt/d/XIAOD/XIAOH/code/iec104/"
 #define FTP_PATH_RE_FILE "/mnt/d/XIAOD/XIAOH/code/xiaoh/"
+#endif
 /*
     unsigned seed;  // Random generator seed
     // Use the time function to get a "seed” value for srand

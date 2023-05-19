@@ -23,12 +23,12 @@ public:
     int Getlen();
     char GerTpye();
 
-    bool setSFrame(int VS, int ACK);
+    bool setSFrame(int VR);
     void updataCON(int VS, int ACK);
     bool setTestFrame();
     bool SetinitFrame();
     bool SetTotalCall();
-    bool SetClockSyn();
+    bool SetClockSyn(unsigned char *CP56Time2aNOW);
     bool SetClockRead();
     bool SetReset();
     bool SetDirCall(char* DirName,char CallFlage = 0x00,st_cp56time2a start = {.Time = 0x00000000000000},st_cp56time2a end = {.Time = 0x00000000000000});

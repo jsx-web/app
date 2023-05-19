@@ -11,6 +11,7 @@
 #include "config.h"
 
 
+
 class Session : public QObject
 {
     Q_OBJECT
@@ -22,8 +23,10 @@ private:
     InfoBuffer *recvInfoBuffer;
     InfoBuffer *I_InfoBuffer;    //存放接收帧(I帧)
     InfoBuffer *U_InfoBuffer;    //存放接收帧(U帧)
+    Frame *SFrame;
     InfoBuffer *S_InfoBuffer;    //存放接收帧(S帧)
-
+    Frame *TestFrame;
+    InfoBuffer *TEST_InfoBuffer; //存放测试帧(测试)
     int bufLen;
     bool isInit;                //初始化成功/失败
     bool isClose;               //会话关闭
@@ -46,18 +49,31 @@ private:
     bool StartLevelUp;  //升级是否启动
     QString VersionFileName;
     bool WaitRecvTest;  //是否等待回复帧
+    bool TestLink;      //测试链路是否存在
+    int K;              // 发送序号和接收序号之间的最大差值   【发送方在发送K个I报文还未收到确认就应该关闭数据传送 默认值为12；从站使用】
+    int W;              // 【接收方最迟收到W个I就必须要回复确认帧 默认值为8；主站使用，这里不使用】
+    int RecvIFrameCount;// 接收I帧的计数
+    // W 不能够超过 K 的2/3
+
 public:
     bool Signals_Slot;  //信号和信号槽连接标识
+    //Get方法
     unsigned char* GetrecvBuf();
     int GetBufLen();
     bool GetStartLevelUp();
     Terminal * GetTerminal();
     Frame GetSendFrame();
     bool GetIsPerset();
+    bool GetWaitRecvTest();
+    //Set方法
+    void SetTestLink(bool status);
+    void SetWaitRecvTest(bool status);
     void SetIsPerset(bool PerSet);
+    void SetRecvBuf(char* recv);
+
+    //其他方法
     void SessionClose();
     bool IsConnect();
-    void SetRecvBuf(char* recv);
     bool EncodeBuff(unsigned char *recvbuf, unsigned char len, unsigned char* C,
                         unsigned char T1 = 0x00, unsigned char VSQ = 0x00, unsigned char *COT = nullptr,
                         unsigned char *ASDU_addr=nullptr, unsigned char *obj_addr = nullptr);
@@ -67,12 +83,18 @@ public:
     bool IFrameCBlocksSerialNumber(char (&C)[4]);
     //I格式C域的序号判定
     bool IFrameCBlocksSerialConfirm(char (&C)[4]);
+    //发送S帧
+    bool SFrameSend(int a);
 
 signals:
     //----------连接是否成功-------
     void ConnectRet(int status,QString IP , qint16 Port);
+    //----------测试帧接收判定信号----
+    void TestConfirm();
+    void TestConfirmSuccess();
+    void TestConfirmTimeOut();
     //-----------接收框显示--------
-    void append_data(int author,char type,QString data);/*@author： 0是主站，1是从站*/
+    void AppendData(int author,QString type,QString data);/*@author： 0是主站，1是从站*/
     //---------调试消息显示-------
     void UpdataDebugEdit(QString msg);
     //--------根据model写入数据----
@@ -110,8 +132,10 @@ signals:
 public slots:
     void slotUpdataStop();
 public:
+    //接收线程
+    void RecvData();
     //接收帧显示
-    void updata_recv_edit(int author,unsigned char* data);
+    void updata_recv_edit(int author,unsigned char* data);/*@author： 0是主站，1是从站*/
     //测试链路
     bool TestSession();
     bool TestSessionSuccess();
@@ -125,7 +149,7 @@ public:
     bool TotalCallSessionSuccess();
     bool TotalCallData(int packid,unsigned char T1,unsigned char* obj_addr,unsigned char* data);
     //时钟同步
-    Frame ClockSynSession();
+    Frame ClockSynSession(unsigned char *CP56Time2aNOW);
     bool ClockSynSessionSuccess(Frame &frame);
     //时钟读取
     bool ClockReadSession();

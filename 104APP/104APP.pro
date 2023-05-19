@@ -57,7 +57,7 @@ FORMS += \
         mainwindow.ui \
     dialog_writevalueadd.ui
 
-LIBS += -lpthread libws2_32 libwsock32
+LIBS += -lpthread libwsock32 libws2_32
 
 RESOURCES += \
     res.qrc
