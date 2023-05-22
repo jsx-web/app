@@ -134,20 +134,11 @@ bool Uchar_to_cp56time2a(unsigned char *date,st_cp56time2a *time)
 
 bool cp56time2a_to_char(char (&date)[7],st_cp56time2a time)
 {
-    char *show ;
-    show= new char[64];
-    memset(show,0,64);
     memset(date,0,7);
-    //printf("%014lx ",(time.Time));
-    for (int i = 6; i >= 0; i--)
+    printf("%llx\n",time.Time);
+    for (int i = 0; i < 7; i++)
     {
         date[i] = (((time.Time)>>(i*8))&0xFF);
-    }
-    for (int i = 6; i >= 3; i--)
-    {
-        char tmp = date[i];
-        date[i] = date[6-i];
-        date[6-i] = tmp;
     }
     return true;
 }
@@ -157,7 +148,8 @@ QString get_cp56time2a_string(st_cp56time2a *time)
     char show[100] = {0};
     sprintf(show,"20%02d-%d-%d",time->Compts.year,time->Compts.month,time->Compts.mday);
     sprintf(show,"%s %02d:%02d:%02d",show,time->Compts.hour,time->Compts.min,(time->Compts.msec)/1000);
-    sprintf(show,"%s %4dms 星期%d VI=%d(0有效1无效)",show,(time->Compts.msec)%1000, time->Compts.wday,(time->Compts.month)>>7);
+    sprintf(show,"%s %4dms ",show,(time->Compts.msec)%1000);
+    sprintf(show,"%s 星期%d VI=%d(0有效1无效)",show,time->Compts.wday,(time->Compts.month)>>7);
     cout << show <<endl;
     return QString(show);
 }

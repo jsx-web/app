@@ -27,6 +27,8 @@ private:
     InfoBuffer *S_InfoBuffer;    //存放接收帧(S帧)
     Frame *TestFrame;
     InfoBuffer *TEST_InfoBuffer; //存放测试帧(测试)
+    InfoBuffer *Report_InfoBuffer; //存放上报帧(上报)
+    
     int bufLen;
     bool isInit;                //初始化成功/失败
     bool isClose;               //会话关闭
@@ -51,9 +53,9 @@ private:
     bool WaitRecvTest;  //是否等待回复帧
     bool TestLink;      //测试链路是否存在
     int K;              // 发送序号和接收序号之间的最大差值   【发送方在发送K个I报文还未收到确认就应该关闭数据传送 默认值为12；从站使用】
-    int W;              // 【接收方最迟收到W个I就必须要回复确认帧 默认值为8；主站使用，这里不使用】
+    int W;              // 【接收方最迟收到W个I就必须要回复确认帧 默认值为8；主站使用】    // W 不能够超过 K 的2/3
+
     int RecvIFrameCount;// 接收I帧的计数
-    // W 不能够超过 K 的2/3
 
 public:
     bool Signals_Slot;  //信号和信号槽连接标识
@@ -83,8 +85,6 @@ public:
     bool IFrameCBlocksSerialNumber(char (&C)[4]);
     //I格式C域的序号判定
     bool IFrameCBlocksSerialConfirm(char (&C)[4]);
-    //发送S帧
-    bool SFrameSend(int a);
 
 signals:
     //----------连接是否成功-------
@@ -132,6 +132,10 @@ signals:
 public slots:
     void slotUpdataStop();
 public:
+    //发送S帧
+    bool SFrameSendSession(int &a);
+    //接收S帧
+    bool SFrameRecvSession();
     //接收线程
     void RecvData();
     //接收帧显示
@@ -202,6 +206,8 @@ public:
     //传输成功后放弃
     bool AbandonUpdataSession();
     bool AbandonUpdataSessionSuccess();
+    //处理上报帧
+    bool ReportDataSession();
 
 };
 

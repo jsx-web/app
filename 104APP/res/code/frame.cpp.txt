@@ -109,24 +109,26 @@ char Frame::GerTpye()
     return type;
 }
 
-bool Frame::setSFrame(int VS, int ACK)
+bool Frame::setSFrame(int VR)
 {
     type = 'S';
     //STARTDT:ACT=1 CON=0
-    //68 04 00 00 00 00
-    APCI[2] = (VS&0x7f)<<1;
-    APCI[3] = (VS>>7)&0xff;
-    APCI[4] = (ACK&0x7f)<<1;
-    APCI[5] = (ACK>>7)&0xff;
+    //68 04 01 00 00 00
+    this->APCI[2] = 0x01;
+    this->APCI[3] = 0x00;
+    this->APCI[4] = (VR&0x7f)<<1;
+    this->APCI[5] = (VR>>7)&0xff;
     return setAPDU();
 }
 
 void Frame::updataCON(int VS, int ACK)
 {
-    APDU[2] = (VS&0x7f)<<1;
-    APDU[3] = (VS>>7)&0xff;
-    APDU[4] = (ACK&0x7f)<<1;
-    APDU[5] = (ACK>>7)&0xff;
+    cout << "V_S: " << VS;
+    cout << "ACK: " << ACK << endl;
+    this->APDU[2] = (VS&0x7f)<<1;
+    this->APDU[3] = (VS>>7)&0xff;
+    this->APDU[4] = (ACK&0x7f)<<1;
+    this->APDU[5] = (ACK>>7)&0xff;
 }
 
 bool Frame::setTestFrame()
@@ -180,7 +182,7 @@ bool Frame::SetTotalCall()
     return setAPDU();
 }
 
-bool Frame::SetClockSyn()
+bool Frame::SetClockSyn(unsigned char *CP56Time2aNOW)
 {
     /*
     68（启动符）14（长度:20）00 00（发送序号,I 帧，C_CS_NA_1）00 00（接收序号,10）
@@ -212,7 +214,8 @@ bool Frame::SetClockSyn()
     //ASDU 信息体地址（=0）(3字节)
     //ASDU[6] = 0x00;  ASDU[7] = 0x00; ASDU[8] = 0x00;
     //ASDU 时标char CP56Time2a[7] = {ASDU[9]~ASDU[15]}
-    unsigned char CP56Time2a[7] = {0x01,0x02,0x03,0x04,0x81,0x09,0x10};
+    unsigned char CP56Time2a[7] = {0};
+    my_strncpy(CP56Time2a,CP56Time2aNOW,7);
     for(int i = 9; i<16 ; i++)
     {
         ASDU[i] = CP56Time2a[i-9];

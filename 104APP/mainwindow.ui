@@ -19,6 +19,10 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="res.qrc">
+    <normaloff>:/res/Icon/Icon.svg</normaloff>:/res/Icon/Icon.svg</iconset>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout_2">
     <item row="0" column="0">
@@ -44,7 +48,7 @@
 QTabBar::tab{height:50}</string>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>5</number>
        </property>
        <widget class="QWidget" name="tab_Connect">
         <attribute name="title">
@@ -469,7 +473,7 @@ QTabBar::tab{height:50}</string>
              <string>当前时间在这显示</string>
             </property>
            </widget>
-           <widget class="QPushButton" name="pushButton_11">
+           <widget class="QPushButton" name="Btn_GetTime">
             <property name="geometry">
              <rect>
               <x>560</x>
@@ -572,7 +576,22 @@ QTabBar::tab{height:50}</string>
              <height>310</height>
             </size>
            </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_7">
+           <layout class="QHBoxLayout" name="horizontalLayout_23">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
             <item>
              <widget class="QWidget" name="widget_14" native="true">
               <property name="minimumSize">
@@ -799,20 +818,54 @@ QTabBar::tab{height:50}</string>
              </widget>
             </item>
             <item>
-             <widget class="QTableView" name="tableView_Dir">
-              <property name="minimumSize">
-               <size>
-                <width>440</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>440</width>
-                <height>16777215</height>
-               </size>
-              </property>
-             </widget>
+             <layout class="QVBoxLayout" name="verticalLayout_22">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_7">
+                <item>
+                 <spacer name="horizontalSpacer_8">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="Btn_DirClear">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>30</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>清空</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QTableView" name="tableView_Dir">
+                <property name="minimumSize">
+                 <size>
+                  <width>440</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>440</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
              <spacer name="horizontalSpacer_5">
@@ -1465,8 +1518,19 @@ QTabBar::tab{height:50}</string>
       </widget>
       <widget class="QTabWidget" name="LogWidget">
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
+       <property name="iconSize">
+        <size>
+         <width>12</width>
+         <height>12</height>
+        </size>
+       </property>
+       <widget class="QWidget" name="tab">
+        <attribute name="title">
+         <string/>
+        </attribute>
+       </widget>
        <widget class="QWidget" name="tab_3">
         <attribute name="title">
          <string>接收消息</string>
@@ -1562,6 +1626,8 @@ QTabBar::tab{height:50}</string>
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="res.qrc"/>
+ </resources>
  <connections/>
 </ui>

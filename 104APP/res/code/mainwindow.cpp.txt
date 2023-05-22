@@ -16,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    delete session;
     delete ui;
 }
 
@@ -28,12 +29,19 @@ void MainWindow::Init()
     Write_check->addButton(ui->radioButton_seq);
     Write_check->addButton(ui->radioButton_nseq);
     UpdataTransfer = false;
-//    QPushButton* tabButton = new QPushButton(tr("清空"), this);
-//    ui->LogWidget->setCornerWidget(tabButton);
 
     IconInit();
     TableVeiwInit();
     ProgressBarInit();
+    TimeInit();
+
+    Btn_LogClear = new QPushButton();
+    Btn_LogClear->setFlat(true);
+    Btn_LogClear->setFixedSize(20,20);
+    Btn_LogClear->setIcon(QIcon(":/res/Icon/clear.svg"));
+    ui->LogWidget->setTabEnabled(0, false);
+    ui->LogWidget->tabBar()->setTabButton(0, QTabBar::RightSide, Btn_LogClear);
+    connect(Btn_LogClear,SIGNAL(clicked(bool)),this,SLOT(Btn_LogClear_clicked()));
 }
 
 void MainWindow::TableVeiwInit()
@@ -154,19 +162,15 @@ void MainWindow::TableVeiwInit()
 
 void MainWindow::IconInit()
 {
-    ui->labelConIocn->setStyleSheet("image: url(:/res/res/connect/fail.svg);");
-    ui->Btn_Connect->setIcon(QIcon(":/res/res/Icon/lianjie.svg"));
-    ui->Btn_Close->setIcon(QIcon(":/res/res/Icon/duankai.svg"));
-    ui->Btn_Init->setIcon(QIcon(":/res/res/Icon/init.svg"));
-    ui->Btn_TotalCall->setIcon(QIcon(":/res/res/Icon/datacall.svg"));
-    ui->Btn_ClockSyn->setIcon(QIcon(":/res/res/Icon/sync-time.svg"));
-    ui->Btn_ClockRead->setIcon(QIcon(":/res/res/Icon/read-time.svg"));
-    ui->Btn_Reset->setIcon(QIcon(":/res/res/Icon/reset.svg"));
-    ui->Btn_DirCall->setIcon(QIcon(":/res/res/Icon/FileTransfer.svg"));
-//    ui->Btn_RemoteControl->setIcon(QIcon(":/res/res/Icon/control.svg"));
-//    ui->Btn_ElectricalEnergyCall->setIcon(QIcon(":/res/res/Icon/ElectricalEnergyCall.svg"));
-//    ui->Btn_VersionUpdata->setIcon(QIcon(":/res/res/Icon/VersionUpdata.svg"));
-    //ui->Btn_sideWidget->setIcon(QIcon(":/res/res/Right.svg"));
+    ui->labelConIocn->setStyleSheet("image: url(:/res/connect/fail.svg);");
+    ui->Btn_Connect->setIcon(QIcon(":/res/Icon/lianjie.svg"));
+    ui->Btn_Close->setIcon(QIcon(":/res/Icon/duankai.svg"));
+    ui->Btn_Init->setIcon(QIcon(":/res/Icon/init.svg"));
+    ui->Btn_TotalCall->setIcon(QIcon(":/res/Icon/datacall.svg"));
+    ui->Btn_ClockSyn->setIcon(QIcon(":/res/Icon/sync-time.svg"));
+    ui->Btn_ClockRead->setIcon(QIcon(":/res/Icon/read-time.svg"));
+    ui->Btn_Reset->setIcon(QIcon(":/res/Icon/reset.svg"));
+    ui->Btn_DirCall->setIcon(QIcon(":/res/Icon/FileTransfer.svg"));
 }
 
 void MainWindow::ProgressBarInit()
@@ -200,6 +204,24 @@ void MainWindow::ProgressBarInit()
     ui->progressBar_Updata->setAlignment(Qt::AlignRight | Qt::AlignVCenter);  // 对齐方式
 }
 
+void MainWindow::TimeInit()
+{
+
+    timer_calendar = new QTimer(this);//new一个QTimer对象
+    connect(timer_calendar,SIGNAL(timeout()),this,SLOT(timerUpdate()));//连接槽函数
+    timer_calendar->start(1000);//每一秒溢出一次进入槽函数
+}
+
+void MainWindow::timerUpdate()
+{
+
+    QDateTime time = QDateTime::currentDateTime();
+
+    QString str = time.toString("yyyy-MM-dd \nhh:mm:ss dddd");
+
+    ui->label_Time->setText(str);
+}
+
 
 void MainWindow::slotConnectRet(int status, QString IP, qint16 Port)
 {
@@ -215,7 +237,7 @@ void MainWindow::slotConnectRet(int status, QString IP, qint16 Port)
     {
         //连接成功
         ui->labelConIocn->clear();
-        ui->labelConIocn->setStyleSheet("image: url(:/res/res/connect/success.svg);");
+        ui->labelConIocn->setStyleSheet("image: url(:/res/connect/success.svg);");
         ui->Edit_DeBug->append(QString("connect success!!!"));
         ui->Edit_DeBug->append(QString("IP:%1,PORT:%2").arg(IP).arg(QString::number(Port)));
 
@@ -225,20 +247,60 @@ void MainWindow::slotConnectRet(int status, QString IP, qint16 Port)
             QMessageBox::Ok | QMessageBox::Cancel,
             QMessageBox::Ok);
 
-        //测试链路保活
-        //session->TestSession(client);
+        //启动接收分拣
+        QFuture<void> RecvDataSession =QtConcurrent::run(session,&Session::RecvData);
+        cout << "recv start" << endl;
+
+//        //测试链路保活
 //        connect(session,SIGNAL(TestConfirm()),this,SLOT(slotTestConfirm()));
-//        QFuture<bool> TestSession =QtConcurrent::run(session,&Session::TestSession,client);
+//        QFuture<bool> TestSession =QtConcurrent::run(session,&Session::TestSession);
 //        cout << "test start" << endl;
+
+//        //上报事件监听
+//        QFuture<bool> ReportDataSession =QtConcurrent::run(session,&Session::ReportDataSession);
+//        cout << "Report start" << endl;
+
     }
     else
     {
         cout << "connecting" << endl;
     }
-    //BtnEnable();
 }
 
-void MainWindow::slotappendData(int author, char type, QString data)
+void MainWindow::slotTestConfirm()
+{
+
+    QFuture<bool> TestSessionSuccess =QtConcurrent::run(session,&Session::TestSessionSuccess);
+}
+
+void MainWindow::slotTestConfirmSuccess()
+{
+    session->SetWaitRecvTest(false);
+    int row = ui->tableView_recv->model()->rowCount();
+    //发送者
+    recvmodel->setItem(row, 0, new QStandardItem("其他消息"));
+    QColor *color = new QColor(0, 0, 255);
+    recvmodel->item(row, 0)->setTextAlignment(Qt::AlignCenter);
+    recvmodel->item(row, 0)->setForeground(QBrush(*color));
+    //帧类型
+    recvmodel->setItem(row, 1, new QStandardItem((QString("U(测试·从)格式"))));
+    recvmodel->item(row, 1)->setTextAlignment(Qt::AlignCenter);
+    recvmodel->item(row, 1)->setForeground(QBrush(*color));
+    //帧数据
+    recvmodel->setItem(row, 2, new QStandardItem("680483000000"));
+    recvmodel->item(row, 2)->setForeground(QBrush(*color));
+
+}
+
+void MainWindow::slotTestConfirmTimeOut()
+{
+    session->SessionClose();
+    session->SetTestLink(false);
+    ui->labelConIocn->clear();
+    ui->labelConIocn->setStyleSheet("image: url(:/res/connect/fail.svg);");
+}
+
+void MainWindow::slotAppendData(int author, QString type, QString data)
 {
     cout << __FUNCTION__ << endl;
     int row = ui->tableView_recv->model()->rowCount();
@@ -261,7 +323,7 @@ void MainWindow::slotappendData(int author, char type, QString data)
     recvmodel->item(row, 0)->setTextAlignment(Qt::AlignCenter);
     recvmodel->item(row, 0)->setForeground(QBrush(*color));
     //帧类型
-    recvmodel->setItem(row, 1, new QStandardItem((QString(type)+QString("格式"))));
+    recvmodel->setItem(row, 1, new QStandardItem((type+QString("格式"))));
     recvmodel->item(row, 1)->setTextAlignment(Qt::AlignCenter);
     recvmodel->item(row, 1)->setForeground(QBrush(*color));
     //帧数据
@@ -321,6 +383,10 @@ void MainWindow::slotShowDataTotalCall(int packid,QString T1, QString obj_addr, 
     {
         color = new QColor(139,0,139);
     }
+    if(packid == -1)
+    {
+        color = new QColor(255,69,0);
+    }
     int i = 0;
     for(QString value:QList)
     {
@@ -354,11 +420,22 @@ void MainWindow::slotColckControl(int operation, char sender, QString Time)
     }
     else if(operation == 2)
     {
-        Operation = QString("时钟读取");
+        Operation = QString("时钟同步(失败)");
     }
     else if(operation == 3)
     {
-        Operation = QString("时钟获取");
+        Operation = QString("时钟同步(成功)");
+    }else if(operation == 4)
+    {
+        Operation = QString("时钟读取");
+    }
+    else if(operation == 5)
+    {
+        Operation = QString("时钟读取(失败)");
+    }
+    else if(operation == 6)
+    {
+        Operation = QString("时钟读取(成功)");
     }
     colckmodel->setItem(row, 0, new QStandardItem(Operation));
     QString Sender;
@@ -755,7 +832,9 @@ void MainWindow::on_Btn_Connect_clicked()
     {
         //槽函数连接
         connect(session,SIGNAL(ConnectRet(int,QString,qint16)),this,SLOT(slotConnectRet(int,QString,qint16)));
-        connect(session,SIGNAL(append_data(int,char,QString)),this,SLOT(slotappendData(int,char,QString)));
+        connect(session,SIGNAL(TestConfirmTimeOut()),this,SLOT(slotTestConfirmTimeOut()));
+        connect(session,SIGNAL(TestConfirmSuccess()),this,SLOT(slotTestConfirmSuccess()));
+        connect(session,SIGNAL(AppendData(int,QString,QString)),this,SLOT(slotAppendData(int,QString,QString)));
         connect(session,SIGNAL(UpdataDebugEdit(QString)),this,SLOT(slotUpdataDebugEidt(QString)));
         connect(session,SIGNAL(UpdataTableView(int,int,QStringList)),this,SLOT(slotUpdataTableView(int,int,QStringList)));
         connect(session,SIGNAL(ShowDataTotalCall(int,QString,QString,QString,QString,QString)),this,SLOT(slotShowDataTotalCall(int,QString,QString,QString,QString,QString)));
@@ -790,8 +869,8 @@ void MainWindow::on_Btn_Connect_clicked()
 
 //    //加载中动画
     ui->labelConIocn->clear();
-    ui->labelConIocn->setStyleSheet("image: url(:/res/res/connect/loading.gif);");
-    movie = new QMovie(":/res/res/connect/loading.gif");
+    ui->labelConIocn->setStyleSheet("image: url(:/res/connect/loading.gif);");
+    movie = new QMovie(":/res/connect/loading.gif");
     ui->labelConIocn->setMovie(movie); // 1. 设置要显示的 GIF 动画图片
     movie->start(); // 2. 启动动画
 
@@ -803,15 +882,15 @@ void MainWindow::on_Btn_Close_clicked()
     if(session != nullptr)
     {
         session->SessionClose();
+        session->SetTestLink(false);
         if(!session->IsConnect())
         {
             ui->labelConIocn->clear();
-            ui->labelConIocn->setStyleSheet("image: url(:/res/res/connect/fail.svg);");
-            //连接连接失败
+            ui->labelConIocn->setStyleSheet("image: url(:/res/connect/fail.svg);");
+            //连接断开
             QMessageBox::information(this, tr("提示"), tr("连接已断开"),
                 QMessageBox::Ok | QMessageBox::Cancel,
                 QMessageBox::Ok);
-
         }
     }
     else
@@ -860,7 +939,31 @@ void MainWindow::on_Btn_ClockSyn_clicked()
 {
     if(session != nullptr)
     {
-        Frame f = session->ClockSynSession();
+        QDateTime datetime = QDateTime::currentDateTime(); //当前时间
+        quint16 ms = datetime.time().msec();                //毫秒
+        quint16 year = datetime.date().year();             //年
+        quint8 month = datetime.date().month();			   //月
+        quint8 day = datetime.date().day();				   //日
+        quint8 hour = datetime.time().hour();			   //时
+        quint8 minute = datetime.time().minute();          //分
+        quint8 second = datetime.time().second();          //秒
+        quint8 dayOfWeek = datetime.date().dayOfWeek();    //星期
+        st_cp56time2a time;
+        time.Time = 0;
+        time.Compts.year = year-2000;
+        time.Compts.month = month;
+        time.Compts.mday = day;
+        time.Compts.hour = hour;
+        time.Compts.min = minute;
+        time.Compts.msec = second*1000+ms;
+        time.Compts.wday = dayOfWeek;
+        char data[7] = {0};
+        cp56time2a_to_char(data,time);
+        unsigned char udata[7] = {0};
+        my_strncpy((char*)udata,data,7);
+
+//        unsigned char CP56Time2aNOW[7] = {0x01,0x02,0x03,0x04,0x81,0x09,0x10};
+        Frame f = session->ClockSynSession(udata);
         QFuture<bool> ClockSynSessionSuccess =QtConcurrent::run(session,&Session::ClockSynSessionSuccess,f);
         //ClockSynSessionSuccess.waitForFinished();
     }
@@ -1375,4 +1478,106 @@ void MainWindow::on_Btn_AbandonUpdata_clicked()
             QMessageBox::Ok | QMessageBox::Cancel,
             QMessageBox::Ok);
     }
+}
+
+void MainWindow::on_Btn_Init_Clear_clicked()
+{
+    initmodel->setRowCount(0);
+}
+
+void MainWindow::on_Btn_TotalCall_Clear_clicked()
+{
+    totalcallmodel->setRowCount(0);
+}
+
+void MainWindow::on_Btn_ClockRead_Clear_clicked()
+{
+    colckmodel->setRowCount(0);
+}
+
+void MainWindow::on_Btn_Reset_Clear_clicked()
+{
+    resetmodel->setRowCount(0);
+}
+
+void MainWindow::on_Btn_EnergyCall_Clear_clicked()
+{
+    energycallmodel->setRowCount(0);
+}
+
+void MainWindow::on_Btn_GetTime_clicked()
+{
+    QDateTime datetime = QDateTime::currentDateTime(); //当前时间
+    quint16 ms = datetime.time().msec();                //毫秒
+    quint16 year = datetime.date().year();             //年
+    quint8 month = datetime.date().month();			   //月
+    quint8 day = datetime.date().day();				   //日
+    quint8 hour = datetime.time().hour();			   //时
+    quint8 minute = datetime.time().minute();          //分
+    quint8 second = datetime.time().second();          //秒
+    quint8 dayOfWeek = datetime.date().dayOfWeek();    //星期
+
+    qDebug() << datetime;
+    QString str = datetime.toString("yyyy-MM-dd hh:mm:ss.zzz");
+    qDebug() << str;
+    st_cp56time2a time;
+    qDebug() << year-2000 << month << day << hour << minute << second << ms;
+    time.Time = 0;
+    time.Compts.year = year-2000;
+    time.Compts.month = month;
+    time.Compts.mday = day;
+    time.Compts.hour = hour;
+    time.Compts.min = minute;
+    time.Compts.msec = second*1000+ms;
+    time.Compts.wday = dayOfWeek;
+
+    qDebug() << "msec: " << time.Compts.msec;
+    qDebug() << "dayOfWeek" << dayOfWeek;
+    qDebug() << "time: " << get_cp56time2a_string(&time);
+    char data[7] = {0};
+    cout << "time.Time: ";
+    cout << time.Time << endl;
+    printf("%014llx\n",time.Time);
+    cout << "data: ";
+    cp56time2a_to_char(data,time);
+    unsigned char udata[7] = {0};
+    my_strncpy((char*)udata,data,7);
+    cout << "show_hex: ";
+    show_hex((char*)udata,7);
+    qDebug() << "-------------------";
+    char *st_cp56time2a_ch;
+    hex_to_char(&st_cp56time2a_ch,(char*)udata,7);
+    QString dataStr = QString(st_cp56time2a_ch);
+    int n = dataStr.length();
+    while(n-2 > 0)
+    {
+        n = n - 2;
+        dataStr.insert(n," ");
+    }
+
+    QString msg = QString("时间: \n")+str+QString("\n时标格式: \n  ")+dataStr;
+
+    QMessageBox box;//也可以创建其它对话框，如Qdialog，可以设置窗口大小，文本显示位置等等
+    box.setText(msg);
+    box.setTextInteractionFlags(Qt::TextSelectableByMouse);//设置文本可选中
+    box.exec();//函数用于弹出对话框，会阻塞，关闭对话框后解除阻塞
+}
+
+void MainWindow::Btn_LogClear_clicked()
+{
+    int index = ui->LogWidget->currentIndex();
+//    cout << "index: " << index << endl;
+    if(index == 1)
+    {
+        recvmodel->setRowCount(0);
+    }
+    else if(index == 2)
+    {
+        ui->Edit_DeBug->clear();
+    }
+}
+
+void MainWindow::on_Btn_DirClear_clicked()
+{
+    dirmodel->setRowCount(0);
 }

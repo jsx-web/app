@@ -8,16 +8,19 @@ InfoBuffer::InfoBuffer()
 
 int InfoBuffer::GetMaxSize()
 {
+    std::unique_lock<std::mutex> lck(mtx);
     return MaxSize;
 }
 
 int InfoBuffer::GetSize()
 {
+    std::unique_lock<std::mutex> lck(mtx);
     return Size;
 }
 
 bool InfoBuffer::push(unsigned char *data, int len)
 {
+    std::unique_lock<std::mutex> lck(mtx);
     if(len < BUF_LEN)
     {
         if(Size <= MaxSize)
@@ -26,6 +29,7 @@ bool InfoBuffer::push(unsigned char *data, int len)
             Data.setInfo(data,len);
             Q.push(Data);
             Size++;
+            cv.notify_one();
             return true;
         }
         else
@@ -55,4 +59,25 @@ bool InfoBuffer::pop(Info &top)
        cout << "BuffInfo is empty" << endl;
        return false;
     }
+}
+
+void InfoBuffer::wait(Info &top)
+{
+    std::unique_lock<std::mutex> lck(mtx);
+    while (!Q.size()) cv.wait(lck);     //如果队列未空,就阻塞等待,wait函数释放锁,返回
+    top = Q.front();
+    Q.pop();
+}
+
+bool InfoBuffer::poll(Info &top)
+{
+    QThread::msleep(300);
+    std::unique_lock<std::mutex> lck(mtx);
+    if (Q.size())
+    {
+        top = Q.front();
+        Q.pop();
+        return true;
+    }
+    return false;
 }

@@ -1,5 +1,6 @@
 <RCC>
-    <qresource prefix="/res">
+    <qresource prefix="/">
+        <file>res/Icon/clear.svg</file>
         <file>res/connect/connect.gif</file>
         <file>res/connect/fail.svg</file>
         <file>res/connect/loading.gif</file>

@@ -9,7 +9,6 @@ FileOperation::FileOperation()
     FollowFlage = 0x00;
     FileDate = nullptr;
     CRC = 0x00;
-
 }
 
 FileOperation::~FileOperation()

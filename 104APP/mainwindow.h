@@ -37,6 +37,7 @@ public:
 private:
     QButtonGroup *C_S_check;
     QButtonGroup *Write_check;
+    QPushButton *Btn_LogClear;
     QMovie *movie;
     QStandardItemModel* recvmodel;
     QStandardItemModel* initmodel;
@@ -185,6 +186,12 @@ private slots:
     void on_Btn_Reset_Clear_clicked();
 
     void on_Btn_EnergyCall_Clear_clicked();
+
+    void on_Btn_GetTime_clicked();
+
+    void Btn_LogClear_clicked();
+
+    void on_Btn_DirClear_clicked();
 
 private:
     Ui::MainWindow *ui;
