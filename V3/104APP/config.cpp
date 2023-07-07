@@ -143,6 +143,18 @@ bool cp56time2a_to_char(char (&date)[7],st_cp56time2a time)
     return true;
 }
 
+bool cp56time2a_to_char(char **date,st_cp56time2a time)
+{
+    *date = new char[7];
+    memset(*date,0,7);
+    printf("%llx\n",time.Time);
+    for (int i = 0; i < 7; i++)
+    {
+        *date[i] = (((time.Time)>>(i*8))&0xFF);
+    }
+    return true;
+}
+
 QString get_cp56time2a_string(st_cp56time2a *time)
 {
     char show[100] = {0};

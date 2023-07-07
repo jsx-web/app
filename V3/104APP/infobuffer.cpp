@@ -107,3 +107,15 @@ bool InfoBuffer::clearBuffer()
     }
     return false;
 }
+
+bool InfoBuffer::top(Info &top)
+{
+    QThread::msleep(300);
+    std::unique_lock<std::mutex> lck(mtx);
+    if (Q.size())
+    {
+        top = Q.front();
+        return true;
+    }
+    return false;
+}

@@ -106,11 +106,13 @@ public:
     QHBoxLayout *horizontalLayout_23;
     QWidget *widget_14;
     QVBoxLayout *verticalLayout_8;
+    QWidget *dirCallwidget;
     QHBoxLayout *horizontalLayout_6;
     QLabel *label_3;
     QLineEdit *Edit_DirName;
     QPushButton *Btn_DirCall;
     QFrame *line;
+    QWidget *readfliewidget;
     QVBoxLayout *verticalLayout;
     QWidget *widget_11;
     QHBoxLayout *horizontalLayout_8;
@@ -126,6 +128,7 @@ public:
     QProgressBar *progressBar_Read;
     QPushButton *Btn_Read;
     QFrame *line_2;
+    QWidget *wirtefilewidget;
     QVBoxLayout *verticalLayout_7;
     QWidget *widget_13;
     QHBoxLayout *horizontalLayout_11;
@@ -136,6 +139,7 @@ public:
     QHBoxLayout *horizontalLayout_13;
     QProgressBar *progressBar_Write;
     QPushButton *Btn_Write;
+    QSpacerItem *verticalSpacer;
     QVBoxLayout *verticalLayout_22;
     QHBoxLayout *horizontalLayout_7;
     QSpacerItem *horizontalSpacer_8;
@@ -239,7 +243,7 @@ public:
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QStringLiteral("MainWindow"));
-        MainWindow->resize(952, 600);
+        MainWindow->resize(952, 683);
         MainWindow->setMinimumSize(QSize(950, 600));
         QIcon icon;
         icon.addFile(QStringLiteral(":/res/Icon/Icon.svg"), QSize(), QIcon::Normal, QIcon::Off);
@@ -293,13 +297,13 @@ public:
         horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));
         radioBtn_Server = new QRadioButton(widget);
         radioBtn_Server->setObjectName(QStringLiteral("radioBtn_Server"));
-        radioBtn_Server->setChecked(false);
+        radioBtn_Server->setChecked(true);
 
         horizontalLayout->addWidget(radioBtn_Server);
 
         radioBtn_Client = new QRadioButton(widget);
         radioBtn_Client->setObjectName(QStringLiteral("radioBtn_Client"));
-        radioBtn_Client->setChecked(true);
+        radioBtn_Client->setChecked(false);
 
         horizontalLayout->addWidget(radioBtn_Client);
 
@@ -534,28 +538,31 @@ public:
         verticalLayout_8->setContentsMargins(11, 11, 11, 11);
         verticalLayout_8->setObjectName(QStringLiteral("verticalLayout_8"));
         verticalLayout_8->setContentsMargins(-1, 5, -1, 5);
-        horizontalLayout_6 = new QHBoxLayout();
+        dirCallwidget = new QWidget(widget_14);
+        dirCallwidget->setObjectName(QStringLiteral("dirCallwidget"));
+        horizontalLayout_6 = new QHBoxLayout(dirCallwidget);
         horizontalLayout_6->setSpacing(6);
+        horizontalLayout_6->setContentsMargins(11, 11, 11, 11);
         horizontalLayout_6->setObjectName(QStringLiteral("horizontalLayout_6"));
-        label_3 = new QLabel(widget_14);
+        label_3 = new QLabel(dirCallwidget);
         label_3->setObjectName(QStringLiteral("label_3"));
 
         horizontalLayout_6->addWidget(label_3);
 
-        Edit_DirName = new QLineEdit(widget_14);
+        Edit_DirName = new QLineEdit(dirCallwidget);
         Edit_DirName->setObjectName(QStringLiteral("Edit_DirName"));
         Edit_DirName->setMinimumSize(QSize(0, 20));
 
         horizontalLayout_6->addWidget(Edit_DirName);
 
-        Btn_DirCall = new QPushButton(widget_14);
+        Btn_DirCall = new QPushButton(dirCallwidget);
         Btn_DirCall->setObjectName(QStringLiteral("Btn_DirCall"));
         Btn_DirCall->setMinimumSize(QSize(0, 30));
 
         horizontalLayout_6->addWidget(Btn_DirCall);
 
 
-        verticalLayout_8->addLayout(horizontalLayout_6);
+        verticalLayout_8->addWidget(dirCallwidget);
 
         line = new QFrame(widget_14);
         line->setObjectName(QStringLiteral("line"));
@@ -564,10 +571,15 @@ public:
 
         verticalLayout_8->addWidget(line);
 
-        verticalLayout = new QVBoxLayout();
-        verticalLayout->setSpacing(6);
+        readfliewidget = new QWidget(widget_14);
+        readfliewidget->setObjectName(QStringLiteral("readfliewidget"));
+        readfliewidget->setMaximumSize(QSize(16777215, 140));
+        verticalLayout = new QVBoxLayout(readfliewidget);
+        verticalLayout->setSpacing(3);
+        verticalLayout->setContentsMargins(11, 11, 11, 11);
         verticalLayout->setObjectName(QStringLiteral("verticalLayout"));
-        widget_11 = new QWidget(widget_14);
+        verticalLayout->setContentsMargins(0, 0, 0, 0);
+        widget_11 = new QWidget(readfliewidget);
         widget_11->setObjectName(QStringLiteral("widget_11"));
         widget_11->setMinimumSize(QSize(330, 0));
         horizontalLayout_8 = new QHBoxLayout(widget_11);
@@ -593,7 +605,7 @@ public:
 
         verticalLayout->addWidget(widget_11);
 
-        widget_12 = new QWidget(widget_14);
+        widget_12 = new QWidget(readfliewidget);
         widget_12->setObjectName(QStringLiteral("widget_12"));
         widget_12->setMinimumSize(QSize(0, 40));
         widget_12->setMaximumSize(QSize(16777215, 16777215));
@@ -624,13 +636,13 @@ public:
         horizontalLayout_10 = new QHBoxLayout();
         horizontalLayout_10->setSpacing(6);
         horizontalLayout_10->setObjectName(QStringLiteral("horizontalLayout_10"));
-        progressBar_Read = new QProgressBar(widget_14);
+        progressBar_Read = new QProgressBar(readfliewidget);
         progressBar_Read->setObjectName(QStringLiteral("progressBar_Read"));
         progressBar_Read->setValue(24);
 
         horizontalLayout_10->addWidget(progressBar_Read);
 
-        Btn_Read = new QPushButton(widget_14);
+        Btn_Read = new QPushButton(readfliewidget);
         Btn_Read->setObjectName(QStringLiteral("Btn_Read"));
         Btn_Read->setMinimumSize(QSize(0, 30));
 
@@ -640,7 +652,7 @@ public:
         verticalLayout->addLayout(horizontalLayout_10);
 
 
-        verticalLayout_8->addLayout(verticalLayout);
+        verticalLayout_8->addWidget(readfliewidget);
 
         line_2 = new QFrame(widget_14);
         line_2->setObjectName(QStringLiteral("line_2"));
@@ -649,10 +661,13 @@ public:
 
         verticalLayout_8->addWidget(line_2);
 
-        verticalLayout_7 = new QVBoxLayout();
+        wirtefilewidget = new QWidget(widget_14);
+        wirtefilewidget->setObjectName(QStringLiteral("wirtefilewidget"));
+        verticalLayout_7 = new QVBoxLayout(wirtefilewidget);
         verticalLayout_7->setSpacing(6);
+        verticalLayout_7->setContentsMargins(11, 11, 11, 11);
         verticalLayout_7->setObjectName(QStringLiteral("verticalLayout_7"));
-        widget_13 = new QWidget(widget_14);
+        widget_13 = new QWidget(wirtefilewidget);
         widget_13->setObjectName(QStringLiteral("widget_13"));
         widget_13->setMinimumSize(QSize(330, 0));
         horizontalLayout_11 = new QHBoxLayout(widget_13);
@@ -686,13 +701,13 @@ public:
         horizontalLayout_13 = new QHBoxLayout();
         horizontalLayout_13->setSpacing(6);
         horizontalLayout_13->setObjectName(QStringLiteral("horizontalLayout_13"));
-        progressBar_Write = new QProgressBar(widget_14);
+        progressBar_Write = new QProgressBar(wirtefilewidget);
         progressBar_Write->setObjectName(QStringLiteral("progressBar_Write"));
         progressBar_Write->setValue(24);
 
         horizontalLayout_13->addWidget(progressBar_Write);
 
-        Btn_Write = new QPushButton(widget_14);
+        Btn_Write = new QPushButton(wirtefilewidget);
         Btn_Write->setObjectName(QStringLiteral("Btn_Write"));
         Btn_Write->setMinimumSize(QSize(0, 30));
 
@@ -702,7 +717,11 @@ public:
         verticalLayout_7->addLayout(horizontalLayout_13);
 
 
-        verticalLayout_8->addLayout(verticalLayout_7);
+        verticalLayout_8->addWidget(wirtefilewidget);
+
+        verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
+
+        verticalLayout_8->addItem(verticalSpacer);
 
 
         horizontalLayout_23->addWidget(widget_14);
@@ -942,12 +961,13 @@ public:
 
         radioButton_nseq = new QRadioButton(widget_16);
         radioButton_nseq->setObjectName(QStringLiteral("radioButton_nseq"));
+        radioButton_nseq->setChecked(true);
 
         verticalLayout_14->addWidget(radioButton_nseq);
 
         radioButton_seq = new QRadioButton(widget_16);
         radioButton_seq->setObjectName(QStringLiteral("radioButton_seq"));
-        radioButton_seq->setChecked(true);
+        radioButton_seq->setChecked(false);
 
         verticalLayout_14->addWidget(radioButton_seq);
 
@@ -1028,6 +1048,7 @@ public:
         DateWidget->addTab(tab_ElectricalEnergyCall, QString());
         tab_VersionUpdata = new QWidget();
         tab_VersionUpdata->setObjectName(QStringLiteral("tab_VersionUpdata"));
+        tab_VersionUpdata->setEnabled(true);
         verticalLayout_19 = new QVBoxLayout(tab_VersionUpdata);
         verticalLayout_19->setSpacing(6);
         verticalLayout_19->setContentsMargins(11, 11, 11, 11);
@@ -1234,7 +1255,7 @@ public:
 
         retranslateUi(MainWindow);
 
-        DateWidget->setCurrentIndex(0);
+        DateWidget->setCurrentIndex(5);
         LogWidget->setCurrentIndex(3);
 
 

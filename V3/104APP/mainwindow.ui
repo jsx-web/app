@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>952</width>
-    <height>600</height>
+    <height>683</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -48,7 +48,7 @@
 QTabBar::tab{height:50}</string>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>5</number>
        </property>
        <widget class="QWidget" name="tab_Connect">
         <attribute name="title">
@@ -96,7 +96,7 @@ QTabBar::tab{height:50}</string>
                     <string> 终端</string>
                    </property>
                    <property name="checked">
-                    <bool>false</bool>
+                    <bool>true</bool>
                    </property>
                   </widget>
                  </item>
@@ -106,7 +106,7 @@ QTabBar::tab{height:50}</string>
                     <string>本地</string>
                    </property>
                    <property name="checked">
-                    <bool>true</bool>
+                    <bool>false</bool>
                    </property>
                   </widget>
                  </item>
@@ -614,38 +614,40 @@ QTabBar::tab{height:50}</string>
                 <number>5</number>
                </property>
                <item>
-                <layout class="QHBoxLayout" name="horizontalLayout_6">
-                 <item>
-                  <widget class="QLabel" name="label_3">
-                   <property name="text">
-                    <string>目录名：</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QLineEdit" name="Edit_DirName">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="Btn_DirCall">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>30</height>
-                    </size>
-                   </property>
-                   <property name="text">
-                    <string>文件目录召唤</string>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
+                <widget class="QWidget" name="dirCallwidget" native="true">
+                 <layout class="QHBoxLayout" name="horizontalLayout_6">
+                  <item>
+                   <widget class="QLabel" name="label_3">
+                    <property name="text">
+                     <string>目录名：</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="Edit_DirName">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="Btn_DirCall">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>30</height>
+                     </size>
+                    </property>
+                    <property name="text">
+                     <string>文件目录召唤</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
                </item>
                <item>
                 <widget class="Line" name="line">
@@ -655,80 +657,127 @@ QTabBar::tab{height:50}</string>
                 </widget>
                </item>
                <item>
-                <layout class="QVBoxLayout" name="verticalLayout">
-                 <item>
-                  <widget class="QWidget" name="widget_11" native="true">
-                   <property name="minimumSize">
-                    <size>
-                     <width>330</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                   <layout class="QHBoxLayout" name="horizontalLayout_8">
+                <widget class="QWidget" name="readfliewidget" native="true">
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>140</height>
+                  </size>
+                 </property>
+                 <layout class="QVBoxLayout" name="verticalLayout">
+                  <property name="spacing">
+                   <number>3</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QWidget" name="widget_11" native="true">
+                    <property name="minimumSize">
+                     <size>
+                      <width>330</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                    <layout class="QHBoxLayout" name="horizontalLayout_8">
+                     <item>
+                      <widget class="QLabel" name="label_4">
+                       <property name="text">
+                        <string>文件名：</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="Edit_ReadFileName">
+                       <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="label_ReadEnable">
+                       <property name="text">
+                        <string> 未激活</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QWidget" name="widget_12" native="true">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>40</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777215</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
+                    <layout class="QHBoxLayout" name="horizontalLayout_9">
+                     <item>
+                      <widget class="QLabel" name="label_6">
+                       <property name="text">
+                        <string> 文件存放目录：</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="Edit_StorageDir">
+                       <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                       <property name="text">
+                        <string/>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="Btn_DirSelect">
+                       <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>30</height>
+                        </size>
+                       </property>
+                       <property name="text">
+                        <string> 选择目录</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                  <item>
+                   <layout class="QHBoxLayout" name="horizontalLayout_10">
                     <item>
-                     <widget class="QLabel" name="label_4">
-                      <property name="text">
-                       <string>文件名：</string>
+                     <widget class="QProgressBar" name="progressBar_Read">
+                      <property name="value">
+                       <number>24</number>
                       </property>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QLineEdit" name="Edit_ReadFileName">
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>20</height>
-                       </size>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLabel" name="label_ReadEnable">
-                      <property name="text">
-                       <string> 未激活</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QWidget" name="widget_12" native="true">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>40</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>16777215</width>
-                     <height>16777215</height>
-                    </size>
-                   </property>
-                   <layout class="QHBoxLayout" name="horizontalLayout_9">
-                    <item>
-                     <widget class="QLabel" name="label_6">
-                      <property name="text">
-                       <string> 文件存放目录：</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLineEdit" name="Edit_StorageDir">
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>20</height>
-                       </size>
-                      </property>
-                      <property name="text">
-                       <string/>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QPushButton" name="Btn_DirSelect">
+                     <widget class="QPushButton" name="Btn_Read">
                       <property name="minimumSize">
                        <size>
                         <width>0</width>
@@ -736,38 +785,14 @@ QTabBar::tab{height:50}</string>
                        </size>
                       </property>
                       <property name="text">
-                       <string> 选择目录</string>
+                       <string>文件读取</string>
                       </property>
                      </widget>
                     </item>
                    </layout>
-                  </widget>
-                 </item>
-                 <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_10">
-                   <item>
-                    <widget class="QProgressBar" name="progressBar_Read">
-                     <property name="value">
-                      <number>24</number>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="Btn_Read">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>30</height>
-                      </size>
-                     </property>
-                     <property name="text">
-                      <string>文件读取</string>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
-                 </item>
-                </layout>
+                  </item>
+                 </layout>
+                </widget>
                </item>
                <item>
                 <widget class="Line" name="line_2">
@@ -777,75 +802,90 @@ QTabBar::tab{height:50}</string>
                 </widget>
                </item>
                <item>
-                <layout class="QVBoxLayout" name="verticalLayout_7">
-                 <item>
-                  <widget class="QWidget" name="widget_13" native="true">
-                   <property name="minimumSize">
-                    <size>
-                     <width>330</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                   <layout class="QHBoxLayout" name="horizontalLayout_11">
+                <widget class="QWidget" name="wirtefilewidget" native="true">
+                 <layout class="QVBoxLayout" name="verticalLayout_7">
+                  <item>
+                   <widget class="QWidget" name="widget_13" native="true">
+                    <property name="minimumSize">
+                     <size>
+                      <width>330</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                    <layout class="QHBoxLayout" name="horizontalLayout_11">
+                     <item>
+                      <widget class="QLabel" name="label_7">
+                       <property name="text">
+                        <string>文件名：</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="Edit_WirteFileName">
+                       <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="Btn_SelectFile">
+                       <property name="text">
+                        <string>文件选择</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="label_WirteEnable">
+                       <property name="text">
+                        <string> 未激活</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                  <item>
+                   <layout class="QHBoxLayout" name="horizontalLayout_13">
                     <item>
-                     <widget class="QLabel" name="label_7">
-                      <property name="text">
-                       <string>文件名：</string>
+                     <widget class="QProgressBar" name="progressBar_Write">
+                      <property name="value">
+                       <number>24</number>
                       </property>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QLineEdit" name="Edit_WirteFileName">
+                     <widget class="QPushButton" name="Btn_Write">
                       <property name="minimumSize">
                        <size>
                         <width>0</width>
-                        <height>20</height>
+                        <height>30</height>
                        </size>
                       </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QPushButton" name="Btn_SelectFile">
                       <property name="text">
-                       <string>文件选择</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLabel" name="label_WirteEnable">
-                      <property name="text">
-                       <string> 未激活</string>
+                       <string>文件写入</string>
                       </property>
                      </widget>
                     </item>
                    </layout>
-                  </widget>
-                 </item>
-                 <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_13">
-                   <item>
-                    <widget class="QProgressBar" name="progressBar_Write">
-                     <property name="value">
-                      <number>24</number>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="Btn_Write">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>30</height>
-                      </size>
-                     </property>
-                     <property name="text">
-                      <string>文件写入</string>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
-                 </item>
-                </layout>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <spacer name="verticalSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                </spacer>
                </item>
               </layout>
              </widget>
@@ -1260,6 +1300,9 @@ QTabBar::tab{height:50}</string>
                      <property name="text">
                       <string>离散</string>
                      </property>
+                     <property name="checked">
+                      <bool>true</bool>
+                     </property>
                     </widget>
                    </item>
                    <item>
@@ -1268,7 +1311,7 @@ QTabBar::tab{height:50}</string>
                       <string>顺序</string>
                      </property>
                      <property name="checked">
-                      <bool>true</bool>
+                      <bool>false</bool>
                      </property>
                     </widget>
                    </item>
@@ -1385,6 +1428,9 @@ QTabBar::tab{height:50}</string>
         </layout>
        </widget>
        <widget class="QWidget" name="tab_VersionUpdata">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <attribute name="icon">
          <iconset resource="res.qrc">
           <normaloff>:/res/Icon/VersionUpdata.svg</normaloff>:/res/Icon/VersionUpdata.svg</iconset>

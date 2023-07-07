@@ -145,7 +145,7 @@ void Terminal::write(unsigned char *Udata)
 bool Terminal::IsConnect()
 {
     //cout << "Terminalsocket: " << Terminalsocket << endl;
-    if(Terminalsocket > 2&&Terminalsocket < 65535*2)
+    if(Terminalsocket > 2&&Terminalsocket < 65535)
     {
         isconnect = true;
         return true;
@@ -159,10 +159,18 @@ bool Terminal::IsConnect()
 
 void Terminal::TerminalClose()
 {
-    Terminalsocket = closesocket(Terminalsocket);
-    isconnect = false;
-    cout << "close Terminalsocket: " << Terminalsocket << endl;
-    cout << "socket close" << endl;
+    if(Terminalsocket != 0)
+    {
+        Terminalsocket = closesocket(Terminalsocket);
+        isconnect = false;
+        cout << "close Terminalsocket: " << Terminalsocket << endl;
+        cout << "socket close" << endl;
+    }
+    else
+    {
+        cout << "socket already close" << endl;
+    }
+
 }
 
 SOCKET Terminal::getSocket()

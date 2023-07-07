@@ -18,6 +18,7 @@ Session::Session(QObject *parent) : QObject(parent)
     SendFrame = nullptr;
     TestFrame = nullptr;
     SFrame = new Frame('S');
+    ReportSFrame = new Frame('S');
     recvInfoBuffer = new InfoBuffer();
     I_InfoBuffer = new InfoBuffer();
     U_InfoBuffer = new InfoBuffer();
@@ -41,11 +42,19 @@ Session::Session(QObject *parent) : QObject(parent)
     K = 12;
     W = 8;              // 【接收方最迟收到W个I就必须要回复确认帧 默认值为8；主站使用】
     RecvIFrameCount = 0;// 接收I帧的计数
+    RecvReportFrameCount = 0;
 }
 
 Session::~Session()
 {
     SessionTerminal->TerminalClose();
+    delete SendFrame;
+    delete test;
+    delete t2;
+    delete t1;
+    delete t0;
+    delete I_InfoBuffer;
+    delete U_InfoBuffer;
 }
 
 bool Session::wait_for_time(Info &top, InfoBuffer &buff)
@@ -303,7 +312,7 @@ int Session::FrameData(unsigned char *buff)
                 {
                     cout << "Report recv" << endl;
                     Report_InfoBuffer->push(buff,n);
-                    V_R++;
+
                 }
                 else
                 {
@@ -342,7 +351,20 @@ Info Session::I_TakeInfo(int &n)
 
         cout << "I_ACK: " << ACK << " I_V_R: " << GetRecvSerial(Recv.getInfo()) << " I_V_S: " << V_S << endl;
 
-        if(V_R == GetRecvSerial(Recv.getInfo())){n = Recv.getLen();    V_R++;}    //序号正常
+        if(V_R == GetRecvSerial(Recv.getInfo())){
+
+//            if((Recv.getInfo()[8] == 0x03) && (Recv.getInfo()[9] == 0x00))//上报帧
+//            {
+//                cout << "Report recv" << endl;
+//                Report_InfoBuffer->push(Recv.getInfo(),Recv.getLen());
+//              //  V_R++;
+//                SetV_R();
+//                n = -5;
+//            }else
+//            {
+                n = Recv.getLen();    /*V_R++;*/ SetV_R();
+//            }
+        }    //序号正常
         else if (V_R > GetRecvSerial(Recv.getInfo()))
         {
             cout << "Repeat sending" << endl;
@@ -412,6 +434,40 @@ bool Session::IFrameCBlocksSerialConfirm(char (&C)[4])
     }
 }
 
+void Session::SetV_R()
+{
+    std::unique_lock<std::mutex> lck(mtxV_R);
+    V_R++;
+}
+
+int Session::GetV_R()
+{
+    std::unique_lock<std::mutex> lck(mtxV_R);
+    int ret = V_R;
+    return ret;
+}
+
+bool Session::ReSetValue()
+{
+    delete recvInfoBuffer;
+    recvInfoBuffer = new InfoBuffer();
+    delete I_InfoBuffer;
+    I_InfoBuffer = new InfoBuffer();
+    delete U_InfoBuffer;
+    U_InfoBuffer = new InfoBuffer();
+    delete S_InfoBuffer;
+    S_InfoBuffer = new InfoBuffer();
+    delete TEST_InfoBuffer;
+    TEST_InfoBuffer = new InfoBuffer();
+    delete Report_InfoBuffer;
+    Report_InfoBuffer = new InfoBuffer();
+    V_S = 0;    //发送状态变量
+    V_R = 0;    //接收状态变量
+    ACK = 0;    //当前已经正确收到的所有I格式
+
+    return true;
+}
+
 void Session::slotUpdataStop()
 {
     UpdataStop = true;
@@ -422,6 +478,16 @@ bool Session::SFrameSendSession()
     SFrame->setSFrame(ACK);
     FrameSend(*SFrame);
     emit updata_recv_edit(2,SFrame->GetAPDU());
+    return true;
+}
+
+bool Session::ReportSFrameSendSession()
+{
+    ReportSFrame->setSFrame(ACK);
+    FrameSend(*ReportSFrame);
+    char* str;
+    hex_to_char(&str,(char*)ReportSFrame->GetAPDU());
+    show_hex((char*)ReportSFrame->GetAPDU(),ReportSFrame->GetAPDU()[1]+2);
     return true;
 }
 
@@ -646,6 +712,7 @@ bool Session::ConnectSession(QString IP, qint16 Port)
             }
             else
             {
+                ReSetValue();
                 //连接成功
                 emit ConnectRet(1,IP,Port);
                 return true;
@@ -687,7 +754,7 @@ bool Session::InitSessionSuccess()
             if(!(wait_for_time(Recv,*U_InfoBuffer)))
 //            if(!(U_InfoBuffer->wait_time(Recv)))
             {
-                cout << "time out" << endl;
+                cout << "U_time out" << endl;
                 break;
             }
             n = Recv.getLen();
@@ -700,6 +767,7 @@ bool Session::InitSessionSuccess()
         my_strncpy(recvBuff,Recv.getInfo(),Recv.getLen());
 //        n = Recv.getLen();
 
+        if(n == -5) {continue;}
         if(n < 0){break;}
         if(n>1)
         {
@@ -809,6 +877,7 @@ bool Session::TotalCallSessionSuccess()
 
         int datalen = 0;
 
+        if(n == -5) {continue;}
         if(n < 0) {break;}
         
         if(n>1)
@@ -920,7 +989,7 @@ bool Session::TotalCallSessionSuccess()
                             for(int i = 0;i<(VSQ&(0x7f));i++)
                             {
                                 my_strncpy(obj_addr.arr,recvBuff+12+i*(datalen+3),3);
-                                my_strncpy(data,recvBuff+15+i*(datalen+3)+3,datalen);
+                                my_strncpy(data,recvBuff+15+i*(datalen+3),datalen);
                                 TotalCallData(count,T1,obj_addr.arr,data);
                             }
                         }
@@ -1175,7 +1244,7 @@ bool Session::TotalCallData(int packid,unsigned char T1, unsigned char *obj_addr
     return true;
 }
 
-Frame Session::ClockSynSession(unsigned char *CP56Time2aNOW)
+Frame Session:: ClockSynSession(unsigned char *CP56Time2aNOW)
 {
     cout << "-----------"<< __FUNCTION__ <<"-----------------" << endl;
     cout << "ACK: " << ACK << " V_R: " << V_R << " V_S: " << V_S << endl;
@@ -1185,14 +1254,17 @@ Frame Session::ClockSynSession(unsigned char *CP56Time2aNOW)
     this->FrameSend(*SendFrame);
     updata_recv_edit(0,SendFrame->GetAPDU());
     unsigned char sendTime[7] = {0};
+//    show_hex((char*)CP56Time2aNOW,7);
     for(int i=0;i<7;i++)
     {
-        sendTime[i] = (unsigned char)(*(SendFrame->GetAPDU()+15+i));
+        sendTime[i] = (unsigned char)CP56Time2aNOW[i];
     }
-    //show_hex((char*)sendTime,7);
+//    cout << "ClockSynSessionsendTime:";
+//    show_hex((char*)sendTime,7);
     st_cp56time2a STime;
     Uchar_to_cp56time2a(sendTime,&STime);
     QString Time = get_cp56time2a_string(&STime);
+    qDebug() << "ClockSynSession: " << Time;
     emit ColckControl(1,'S',Time);
     V_S++;
     cout << "---------------------------------" << endl;
@@ -1219,6 +1291,7 @@ bool Session::ClockSynSessionSuccess(unsigned char *CP56Time2aNOW)
         my_strncpy(recvBuff,Recv.getInfo(),Recv.getLen());
 //        n = Recv.getLen();
 
+        if(n == -5) {continue;}
         if(n < 0){break;}
         
         if(n>1)
@@ -1295,10 +1368,10 @@ bool Session::ClockReadSession()
     updata_recv_edit(0,SendFrame->GetAPDU());
 
     unsigned char sendTime[7] = {0};
-    for(int i=0;i<7;i++)
-    {
-        sendTime[i] = (unsigned char)(*(SendFrame->GetAPDU()+15+i));
-    }
+//    for(int i=0;i<7;i++)
+//    {
+//        sendTime[i] = (unsigned char)(*(SendFrame->GetAPDU()+15+i));
+//    }
     //show_hex((char*)sendTime,7);
     st_cp56time2a STime;
     Uchar_to_cp56time2a(sendTime,&STime);
@@ -1330,6 +1403,7 @@ bool Session::ClockReadSessionSuccess()
         my_strncpy(recvBuff,Recv.getInfo(),Recv.getLen());
 //        n = Recv.getLen();
 
+        if(n == -5) {continue;}
         if(n < 0){break;}
         if(n>1)
         {
@@ -1420,6 +1494,7 @@ bool Session::ResetSessionSuccess()
         my_strncpy(recvBuff,Recv.getInfo(),Recv.getLen());
 //        n = Recv.getLen();
 
+        if(n == -5) {continue;}
         if(n < 0){break;}
         if(n>1)
         {
@@ -1526,6 +1601,7 @@ bool Session::DirCallSessionSuccess()
         my_strncpy(recvBuff,Recv.getInfo(),Recv.getLen());
 //        n = Recv.getLen();
 
+        if(n == -5) {continue;}
         if(n < 0){break;}
         
         if(n>1)
@@ -1719,6 +1795,7 @@ bool Session::ReadFileSessionSuccess(QString DirName)
         my_strncpy(recvBuff,Recv.getInfo(),Recv.getLen());
 //        n = Recv.getLen();
 
+        if(n == -5) {continue;}
         if(n < 0){break;}
         if(n>1)
         {
@@ -1973,6 +2050,7 @@ bool Session::WriteFileSessionEnable(Frame &frame,int Operation)
         my_strncpy(recvBuff,Recv.getInfo(),Recv.getLen());
 //        n = Recv.getLen();
 
+        if(n == -5) {continue;}
         if(n < 0){break;}
         
         if(n>1)
@@ -2163,6 +2241,7 @@ bool Session::WriteFileSessionConfirm(Frame &frame, int offset,int Operation)
         my_strncpy(recvBuff,Recv.getInfo(),Recv.getLen());
 //        n = Recv.getLen();
 
+        if(n == -5) {continue;}
         if(n < 0){break;}
         if(n>1)
         {
@@ -2350,6 +2429,7 @@ bool Session::ReadFixedValueNumSessionSuccess()
         my_strncpy(recvBuff,Recv.getInfo(),Recv.getLen());
 //        n = Recv.getLen();
 
+        if(n == -5) {continue;}
         if(n < 0){break;}
         if(n>1)
         {
@@ -2406,7 +2486,7 @@ bool Session::ReadFixedValueNumSessionSuccess()
             {
                 cout << " Read FixedValueNum success!!!! " << endl;
                 emit UpdataDebugEdit(QString(" Read FixedValueNum success!!!! "));
-                emit RemoteValueControl(1,a,ValueMIN,ValueMAX,'-',QString(""),'-',QString(""));
+                emit RemoteValueControl(1,a,ValueMIN,ValueMAX,'-',QString(""),0xff,QString(""));
                 ACK++;
                 SFrameSession();
                 return true;
@@ -2460,6 +2540,7 @@ bool Session::SetFixedValueNumSessionSuccess(int FixedValueNum)
         my_strncpy(recvBuff,Recv.getInfo(),Recv.getLen());
 //        n = Recv.getLen();
 
+        if(n == -5) {continue;}
         if(n < 0){break;}
         if(n>1)
         {
@@ -2508,7 +2589,7 @@ bool Session::SetFixedValueNumSessionSuccess(int FixedValueNum)
             {
                 cout << " Set FixedValueNum success!!!! " << endl;
                 emit UpdataDebugEdit(QString(" Set FixedValueNum success!!!! "));
-                emit RemoteValueControl(2,a,ValueMIN,ValueMAX,'-',QString(""),'-',QString(""));
+                emit RemoteValueControl(2,a,ValueMIN,ValueMAX,'-',QString(""),0xff,QString(""));
                 ACK++;
                 SFrameSession();
                 return true;
@@ -2563,6 +2644,7 @@ bool Session::ReadValueSessionSuccess(int Value)
         my_strncpy(recvBuff,Recv.getInfo(),Recv.getLen());
 //        n = Recv.getLen();
 
+        if(n == -5) {continue;}
         if(n < 0){break;}
         if(n>1)
         {
@@ -2624,6 +2706,7 @@ bool Session::ReadValueSessionSuccess(int Value)
                     j = j+2+datalen;
                     char *data;
                     hex_to_char(&data,(char*)Udata,datalen);
+                    cout << "Tag: " << (int)Tag << endl;
                     emit RemoteValueControl(3,num,ValueMIN,ValueMAX,Flag,QString::number(obj_num++,16),Tag,QString(data));
                 }
             }else if((VSQ&0x80)>>7 == 0)
@@ -2650,6 +2733,7 @@ bool Session::ReadValueSessionSuccess(int Value)
                     int obj_num = 0;
                     obj_num = obj_addr[1];
                     obj_num = (obj_num<<8) + obj_addr[0];
+                    cout << "Tag: " << Tag << endl;
                     emit RemoteValueControl(3,num,ValueMIN,ValueMAX,Flag,QString::number(obj_num,16),Tag,QString(data));
                 }
             }
@@ -2712,6 +2796,7 @@ bool Session::PersetSessionSuccess(int ValueNum, int status)
         my_strncpy(recvBuff,Recv.getInfo(),Recv.getLen());
 //        n = Recv.getLen();
 
+        if(n == -5) {continue;}
         if(n < 0){break;}
         if(n>1)
         {
@@ -2859,6 +2944,7 @@ bool Session::PersetCancelSessionSuccess(int ValueNum)
         my_strncpy(recvBuff,Recv.getInfo(),Recv.getLen());
 //        n = Recv.getLen();
 
+        if(n == -5) {continue;}
         if(n < 0){break;}
         if(n>1)
         {
@@ -2908,14 +2994,14 @@ bool Session::PersetCancelSessionSuccess(int ValueNum)
                 {
                     cout << "PersetCancel RecvFlag not right!!!follow-up!!!" << endl;
                     emit UpdataDebugEdit(QString("PersetCancel RecvFlag not right!!!follow-up!!!"));
-                    emit RemoteValueControl(5,num,ValueMIN,ValueMAX,Flag,QString(""),'-',QString("取消预置失败"));
+                    emit RemoteValueControl(5,num,ValueMIN,ValueMAX,Flag,QString(""),0xff,QString("取消预置失败"));
                     return false;
                 }
                 else
                 {
                     cout << "PersetCancel seccuss !!!,hava follow-up" << endl;
                     emit UpdataDebugEdit(QString("PersetCancel seccuss !!!,hava follow-up"));
-                    emit RemoteValueControl(5,num,ValueMIN,ValueMAX,Flag,QString(""),'-',QString("取消预置成功"));
+                    emit RemoteValueControl(5,num,ValueMIN,ValueMAX,Flag,QString(""),0xff,QString("取消预置成功"));
                     ACK++;
                     SFrameSession();
                 }
@@ -2926,7 +3012,7 @@ bool Session::PersetCancelSessionSuccess(int ValueNum)
                 {
                     cout << "PersetCancel RecvFlag not right!!!" << endl;
                     emit UpdataDebugEdit(QString("PersetCancel RecvFlag not right!!!"));
-                    emit RemoteValueControl(5,num,ValueMIN,ValueMAX,Flag,QString(""),'-',QString("取消预置失败"));
+                    emit RemoteValueControl(5,num,ValueMIN,ValueMAX,Flag,QString(""),0xff,QString("取消预置失败"));
                     return false;
                 }
                 else
@@ -2934,7 +3020,7 @@ bool Session::PersetCancelSessionSuccess(int ValueNum)
                     cout << "PersetCancel seccuss !!!,hava follow-up" << endl;
                     emit UpdataDebugEdit(QString("PersetCancel seccuss !!!,hava follow-up"));
                     SetIsPerset(false);
-                    emit RemoteValueControl(5,num,ValueMIN,ValueMAX,Flag,QString(""),'-',QString("取消预置成功"));
+                    emit RemoteValueControl(5,num,ValueMIN,ValueMAX,Flag,QString(""),0xff,QString("取消预置成功"));
                     return true;
                 }
             }
@@ -2982,6 +3068,7 @@ bool Session::CuringSessionSuccess(int ValueNum)
         my_strncpy(recvBuff,Recv.getInfo(),Recv.getLen());
 //        n = Recv.getLen();
 
+        if(n == -5) {continue;}
         if(n < 0){break;}
         if(n>1)
         {
@@ -3030,14 +3117,14 @@ bool Session::CuringSessionSuccess(int ValueNum)
                 {
                     cout << "Curing RecvFlag not right!!!follow-up!!!" << endl;
                     emit UpdataDebugEdit(QString("Curing RecvFlag not right!!!follow-up!!!"));
-                    emit RemoteValueControl(6,num,ValueMIN,ValueMAX,Flag,QString(""),'-',QString("参数固化失败"));
+                    emit RemoteValueControl(6,num,ValueMIN,ValueMAX,Flag,QString(""),0xff,QString("参数固化失败"));
                     return false;
                 }
                 else
                 {
                     cout << "Curing seccuss !!!,hava follow-up" << endl;
                     emit UpdataDebugEdit(QString("Curing seccuss !!!,hava follow-up"));
-                    emit RemoteValueControl(6,num,ValueMIN,ValueMAX,Flag,QString(""),'-',QString("参数固化成功"));
+                    emit RemoteValueControl(6,num,ValueMIN,ValueMAX,Flag,QString(""),0xff,QString("参数固化成功"));
                 }
             }
             else
@@ -3046,7 +3133,7 @@ bool Session::CuringSessionSuccess(int ValueNum)
                 {
                     cout << "Curing RecvFlag not right!!!" << endl;
                     emit UpdataDebugEdit(QString("Curing RecvFlag not right!!!"));
-                    emit RemoteValueControl(6,num,ValueMIN,ValueMAX,Flag,QString(""),'-',QString("参数固化失败"));
+                    emit RemoteValueControl(6,num,ValueMIN,ValueMAX,Flag,QString(""),0xff,QString("参数固化失败"));
                     return false;
                 }
                 else
@@ -3054,7 +3141,7 @@ bool Session::CuringSessionSuccess(int ValueNum)
                     cout << "Curing seccuss !!!,not follow-up" << endl;
                     emit UpdataDebugEdit(QString("Curing seccuss !!!,not follow-up"));
                     SetIsPerset(false);
-                    emit RemoteValueControl(6,num,ValueMIN,ValueMAX,Flag,QString(""),'-',QString("参数固化成功"));
+                    emit RemoteValueControl(6,num,ValueMIN,ValueMAX,Flag,QString(""),0xff,QString("参数固化成功"));
                     return true;
                 }
             }
@@ -3105,6 +3192,7 @@ bool Session::EnergyCallSessionSuccess()
 //        n = Recv.getLen();
         int datalen = 0;
 
+        if(n == -5) {continue;}
         if(n < 0){break;  }
         if(n>1)
         {
@@ -3441,6 +3529,7 @@ bool Session::UpdataVersionSessionSuccess(QString VersionFile)
         my_strncpy(recvBuff,Recv.getInfo(),Recv.getLen());
 //        n = Recv.getLen();
 
+        if(n == -5) {continue;}
         if(n < 0){break;}
         if(n>1)
         {
@@ -3562,6 +3651,7 @@ bool Session::RunUpdataSessionSuccess()
         my_strncpy(recvBuff,Recv.getInfo(),Recv.getLen());
 //        n = Recv.getLen();
 
+        if(n == -5) {continue;}
         if(n < 0){break;}
         if(n>1)
         {
@@ -3663,6 +3753,7 @@ bool Session::AbandonUpdataSessionSuccess()
         my_strncpy(recvBuff,Recv.getInfo(),Recv.getLen());
 //        n = Recv.getLen();
 
+        if(n == -5) {continue;}
         if(n < 0){break;}
         if(n>1)
         {
@@ -3736,12 +3827,19 @@ bool Session::ReportDataSession()
     Info Recv_Info;
     while(SessionTerminal->IsConnect())
     {
+        cout << "Report_InfoBuffer: " << Report_InfoBuffer->GetSize();
         Report_InfoBuffer->wait(Recv_Info);
+        cout << "Report_InfoBuffer: " << Report_InfoBuffer->GetSize();
+        cout << "show Report Info" << endl;
+        //V_R++;
+            SetV_R();
+        ACK++;
+        RecvReportFrameCount++;
+        ReportSFrameSendSession();
         unsigned char *messages;
         messages = new unsigned char[BUF_LEN];
         memset(messages,0,256);
         my_strncpy(messages,Recv_Info.getInfo(),Recv_Info.getLen());
-        cout << "show Report Info" << endl;
         show_hex((char*)messages,messages[1]+2);
 
         unsigned char T1 = messages[6];
@@ -3769,7 +3867,7 @@ bool Session::ReportDataSession()
             type = 5;
         }
 
-        Report(type,QString("U"),QString(data));
+        Report(type,QString("I"),QString(data));
     }
     return false;
 }

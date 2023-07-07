@@ -38,6 +38,8 @@ void MainWindow::Init()
     MenuInit();
     ProgressBarInit();
     TimeLableInit();
+    DefaultListInit();
+    //VisableInit();
 
     Btn_LogClear = new QPushButton();
     Btn_LogClear->setFlat(true);
@@ -268,6 +270,25 @@ void MainWindow::TimeLableInit()
     timer_calendar->start(1000);//每一秒溢出一次进入槽函数
 }
 
+void MainWindow::DefaultListInit()
+{
+    for(int i=1;i<=69;i++)
+    {
+        QString str = QString("%1 80 00").arg(i, 2, 16, QLatin1Char('0'));
+        defaultlist.append(str);
+    }
+    //qDebug() << "defaultlist: " << defaultlist;
+}
+
+void MainWindow::VisableInit()
+{
+    ui->wirtefilewidget->hide();
+//    ui->DateWidget->setTabEnabled(8, false);
+//    ui->DateWidget->setStyleSheet("QTabBar::tab:disabled {width: 0; color: transparent;}");
+    ui->DateWidget->removeTab(8);
+    //ui->DateWidget->findChildren<QTabBar*>().at(8)->hide();
+}
+
 void MainWindow::timerUpdate()
 {
 
@@ -284,11 +305,11 @@ void MainWindow::slotConnectRet(int status, QString IP, qint16 Port)
     if(status == 0)
     {
         //连接连接失败
-        QMessageBox::information(this, tr("提示"), tr("连接超市,请重试"),
+        QMessageBox::information(this, tr("提示"), tr("连接超时,请重试"),
             QMessageBox::Ok | QMessageBox::Cancel,
             QMessageBox::Ok);
         ui->labelConIocn->clear();
-        ui->labelConIocn->setStyleSheet("image: url(:/res/connect/success.svg);");
+        ui->labelConIocn->setStyleSheet("image: url(:/res/connect/fail.svg);");
     }
     else if(status == 1)
     {
@@ -485,6 +506,12 @@ void MainWindow::slotAction3()
 void MainWindow::slotUpdataDebugEidt(QString msg)
 {
     ui->Edit_DeBug->append(msg);
+    if(msg == QString("DirCall ret fail"))
+    {
+        QMessageBox::warning(this, tr("提示"), tr("文件召唤失败,请查看目录名是否有误"),
+                             QMessageBox::Ok | QMessageBox::Cancel,
+                             QMessageBox::Ok);
+    }
 }
 
 void MainWindow::slotUpdataTableView(int modelID, int modellen, QStringList data)
@@ -597,6 +624,7 @@ void MainWindow::slotColckControl(int operation, char sender, QString Time)
     }
     colckmodel->setItem(row, 1, new QStandardItem(Sender));
     colckmodel->setItem(row, 2, new QStandardItem(Time));
+    qDebug() << "Time: " << Time;
     ui->tableView_Colck->scrollToBottom();   //滚动条自动滚到最下
 }
 
@@ -753,30 +781,121 @@ void MainWindow::slotRemoteValueControl(int operation, int ValueNum, int ValueMi
     {
         int n = ObjAddr.toInt();
         QString addr = QString("%1").arg(n,4,10,QLatin1Char('0'));
-        remotevaluemodel->setItem(row, 5, new QStandardItem(addr));
+        remotevaluemodel->setItem(row, 5, new QStandardItem(ObjAddr.toUtf8().data()));
     }
-    //Tag类型
-    if(Tag == '-')
-    {
-        remotevaluemodel->setItem(row, 6, new QStandardItem(QString("-")));
-    }
-    else
-    {
-        char* tagarr;
-        hex_to_char(&tagarr,(char*)(&Tag),1);
+//    //Tag类型
+//    if(Tag == 0xff)
+//    {
+//        remotevaluemodel->setItem(row, 6, new QStandardItem(QString("-")));
+//    }
+//    else
+//    {
+//        char* tagarr;
+//        hex_to_char(&tagarr,(char*)(&Tag),1);
 
-        remotevaluemodel->setItem(row, 6, new QStandardItem(QString::number((int)Tag)));
-    }
-    //值
-    if(Value.isEmpty())
-        remotevaluemodel->setItem(row, 7, new QStandardItem(QString("-")));
-    else
-        remotevaluemodel->setItem(row, 7, new QStandardItem(Value));
+//        remotevaluemodel->setItem(row, 6, new QStandardItem(QString::number((int)Tag)));
+//    }
+//    //值
+//    if(Value.isEmpty())
+//        remotevaluemodel->setItem(row, 7, new QStandardItem(QString("-")));
+//    else
+//        remotevaluemodel->setItem(row, 7, new QStandardItem(Value));
+
+    RemoteValueEncode(Tag,Value,row);
+
     //设置居中
     for(int i=0;i<8;i++)
         remotevaluemodel->item(row, i)->setTextAlignment(Qt::AlignCenter);
 
     ui->tableView_RemoteValue->scrollToBottom();
+}
+
+void MainWindow::RemoteValueEncode(unsigned char Tag, QString Value, int row)
+{
+    //Tag类型
+    if(Tag == 0xff)
+    {
+        remotevaluemodel->setItem(row, 6, new QStandardItem(QString("-")));
+    }
+    else
+    {
+        QString StrTag;
+        if((int)Tag == 1) StrTag="Boolean";
+        else if((int)Tag == 43) StrTag="Tiny";
+        else if((int)Tag == 32) StrTag="UTiny";
+        else if((int)Tag == 33) StrTag="Short";
+        else if((int)Tag == 45) StrTag="UShort";
+        else if((int)Tag == 2) StrTag="Int";
+        else if((int)Tag == 35) StrTag="Uint";
+        else if((int)Tag == 36) StrTag="Long";
+        else if((int)Tag == 37) StrTag="Ulong";
+        else if((int)Tag == 38) StrTag="Float";
+        else if((int)Tag == 39) StrTag="Double";
+        else if((int)Tag == 4) StrTag="String";
+        else if((int)Tag == 0) StrTag="0";
+
+        remotevaluemodel->setItem(row, 6, new QStandardItem(StrTag));
+    }
+    //值
+    if(Value.isEmpty())
+        remotevaluemodel->setItem(row, 7, new QStandardItem(QString("-")));
+    else
+    {
+        if((int)Tag == 4)
+        {
+            char* ValueCh;
+            str_to_char(&ValueCh,Value.toLatin1().data(),strlen(Value.toLatin1().data()));
+            show_hex(ValueCh,strlen(ValueCh));
+            show_hex(Value.toLatin1().data(),strlen(Value.toLatin1().data()));
+            printf("ValueCh: %s\n",ValueCh);
+            remotevaluemodel->setItem(row, 7, new QStandardItem(QString(ValueCh)));
+        }
+        else if((int)Tag == 38)
+        {
+            char* data;
+            str_to_char(&data,Value.toLatin1().data(),strlen(Value.toLatin1().data()));
+            //printf("%02x %02x %02x %02x",data[0],data[1],data[2],data[3]);
+            union FLOAT
+            {
+                float a;
+                unsigned char b[4];
+            }f;
+            my_strncpy(f.b,data,4);
+            //printf("FLOATvalue = %f \n" , f.a);
+            remotevaluemodel->setItem(row, 7, new QStandardItem((QString::number(f.a))));
+        }
+        else if((int)Tag == 38 || (int)Tag == 2 || (int)Tag == 36)
+        {
+            char* data;
+            str_to_char(&data,Value.toLatin1().data(),strlen(Value.toLatin1().data()));
+//            cout <<  "TagInt: ";
+//            show_hex(data,strlen(data));
+            long num=0;
+            for(size_t i=0;(i<strlen(data));i++)
+            {
+                num+=data[i];
+            }
+            //cout <<  num;
+            remotevaluemodel->setItem(row, 7, new QStandardItem(QString::number(num)));
+        }
+        else if((int)Tag == 45 || (int)Tag == 35 || (int)Tag == 37)
+        {
+            char* data;
+            str_to_char(&data,Value.toLatin1().data(),strlen(Value.toLatin1().data()));
+//            cout <<  "TagInt: ";
+//            show_hex(data,strlen(data));
+            unsigned long num=0;
+            for(size_t i=0;(i<strlen(data));i++)
+            {
+                num+=data[i];
+            }
+            //cout <<  num;
+            remotevaluemodel->setItem(row, 7, new QStandardItem(QString::number(num)));
+        }
+        else
+            remotevaluemodel->setItem(row, 7, new QStandardItem(Value));
+
+    }
 }
 
 void MainWindow::slotDialogWriteValue(QString addr, QString tag, QString value)
@@ -1032,7 +1151,8 @@ void MainWindow::slotActionHelp()
                              QMessageBox::Ok);
 }
 
-void MainWindow::slotReport(int type, QString format, QString data)
+void MainWindow::
+slotReport(int type, QString format, QString data)
 {
     cout << __FUNCTION__ << endl;
     int row = ui->tableView_Report->model()->rowCount();
@@ -1099,6 +1219,7 @@ void MainWindow::on_Btn_Connect_clicked()
     quint16 Port = ui->Edit_Port->text().toInt();
 //        qDebug() << "IP：" << IP;
 //        qDebug() << "Port: " << Port;
+    if(session != nullptr){ delete session;}
     session = new Session();
     if(!session->Signals_Slot)
     {
@@ -1136,6 +1257,8 @@ void MainWindow::on_Btn_Connect_clicked()
         //-----------------------------------
         connect(session,SIGNAL(UpdataSuccess()),this,SLOT(slotUpdataSuccess()));
         connect(session,SIGNAL(VersionUpdata(int,QString,int)),this,SLOT(slotVersionUpdata(int,QString,int)));
+        //-----------------------------------
+        connect(session,SIGNAL(Report(int,QString,QString)),this,SLOT(slotReport(int,QString,QString)));
 
     }
 
@@ -1155,14 +1278,23 @@ void MainWindow::on_Btn_Close_clicked()
 {
     if(session != nullptr)
     {
-        session->SessionClose();
-        session->SetTestLink(false);
-        if(!session->IsConnect())
+        if(session->IsConnect())
         {
-            ui->labelConIocn->clear();
-            ui->labelConIocn->setStyleSheet("image: url(:/res/connect/fail.svg);");
-            //连接断开
-            QMessageBox::information(this, tr("提示"), tr("连接已断开"),
+            session->SessionClose();
+            session->SetTestLink(false);
+            if(!session->IsConnect())
+            {
+                ui->labelConIocn->clear();
+                ui->labelConIocn->setStyleSheet("image: url(:/res/connect/fail.svg);");
+                //连接断开
+                QMessageBox::information(this, tr("提示"), tr("连接已断开"),
+                    QMessageBox::Ok | QMessageBox::Cancel,
+                    QMessageBox::Ok);
+            }
+        }
+        else
+        {
+            QMessageBox::information(this, tr("提示"), tr("请先连接"),
                 QMessageBox::Ok | QMessageBox::Cancel,
                 QMessageBox::Ok);
         }
@@ -1243,9 +1375,12 @@ void MainWindow::on_Btn_ClockSyn_clicked()
             time.Compts.wday = dayOfWeek;
             char data[7] = {0};
             cp56time2a_to_char(data,time);
+//            char *data;
+//            cp56time2a_to_char(&data,time);
             unsigned char *udata;
             udata = new unsigned char[7];
             memset(udata,0,7);
+            cout << "udata";
             my_strncpy((char*)udata,data,7);
 
     //        unsigned char CP56Time2aNOW[7] = {0x01,0x02,0x03,0x04,0x81,0x09,0x10};
@@ -1522,9 +1657,9 @@ void MainWindow::on_Btn_InputObjAddr_clicked()
 {
     QString Addr = QInputDialog::getText(this,
                                              "QInputdialog_Name",
-                                             "请输入信息体地址(0x005001=01 50 00)",
+                                             "请输入信息体地址(0x001001=01 10 00)",
                                              QLineEdit::Normal,
-                                             "01 50 00"
+                                             "01 10 00"
                                              );
 
     if(!Addr.isEmpty())
@@ -1547,13 +1682,25 @@ void MainWindow::on_Btn_ReadValue_clicked()
             Num = ui->Edit_ReadValueNum->text();
             qDebug() << Num;
             qDebug() << list;
+            if(list.empty()&&Num==QString("8"))
+            {
+                cout << __FUNCTION__ << endl;
+                cout << Num.toInt() << endl;
+                session->ReadValueSession(Num.toInt(),defaultlist);
+                //show_hex((char*)(f.GetAPDU()),f.GetAPDU()[1]+2);
+                QFuture<bool> ReadValueSessionSuccess =QtConcurrent::run(session,&Session::ReadValueSessionSuccess,Num.toInt());
+                //ClockReadSessionSuccess.waitForFinished();
+            }
+            else
+            {
+                cout << __FUNCTION__ << endl;
+                cout << Num.toInt() << endl;
+                session->ReadValueSession(Num.toInt(),list);
+                //show_hex((char*)(f.GetAPDU()),f.GetAPDU()[1]+2);
+                QFuture<bool> ReadValueSessionSuccess =QtConcurrent::run(session,&Session::ReadValueSessionSuccess,Num.toInt());
+                //ClockReadSessionSuccess.waitForFinished();
+            }
 
-            cout << __FUNCTION__ << endl;
-            cout << Num.toInt() << endl;
-            session->ReadValueSession(Num.toInt(),list);
-            //show_hex((char*)(f.GetAPDU()),f.GetAPDU()[1]+2);
-            QFuture<bool> ReadValueSessionSuccess =QtConcurrent::run(session,&Session::ReadValueSessionSuccess,Num.toInt());
-            //ClockReadSessionSuccess.waitForFinished();
         }
         else
         {

@@ -19,7 +19,8 @@ public:
     explicit Session(QObject *parent = nullptr);
     ~Session();
 private:
-    std::mutex mtx1;
+//    std::mutex mtx1;
+    std::mutex mtxV_R;
     unsigned char *Recv_buf;
     unsigned char *Msg_buf;
     int msgBufLen = 0;
@@ -27,6 +28,7 @@ private:
     InfoBuffer *I_InfoBuffer;    //存放接收帧(I帧)
     InfoBuffer *U_InfoBuffer;    //存放接收帧(U帧)
     Frame *SFrame;
+    Frame *ReportSFrame;
     InfoBuffer *S_InfoBuffer;    //存放接收帧(S帧)
     Frame *TestFrame;
     InfoBuffer *TEST_InfoBuffer; //存放测试帧(测试)
@@ -57,6 +59,7 @@ private:
     int K;              // 发送序号和接收序号之间的最大差值   【发送方在发送K个I报文还未收到确认就应该关闭数据传送 默认值为12；从站使用】
     int W;              // 【接收方最迟收到W个I就必须要回复确认帧 默认值为8；主站使用】    // W 不能够超过 K 的2/3
     int RecvIFrameCount;// 接收I帧的计数
+    int RecvReportFrameCount;// 接收上报帧的计数
 
 public:
      bool wait_for_time(Info &top,InfoBuffer &buff);
@@ -84,15 +87,23 @@ public:
                         unsigned char T1 = 0x00, unsigned char VSQ = 0x00, unsigned char *COT = nullptr,
                         unsigned char *ASDU_addr=nullptr, unsigned char *obj_addr = nullptr);
     void FrameSend(Frame frame);
+    int FrameRecv(unsigned char (&recvBuff)[BUF_LEN]);
     int RecvBuf();
     int FrameData(unsigned char *buff);
-    int FrameRecv(unsigned char (&recvBuff)[BUF_LEN]);
+
     // 取出I帧，并判断序号
     Info I_TakeInfo(int &n);
     //I格式C域的序号编号serial number
     bool IFrameCBlocksSerialNumber(char (&C)[4]);
     //I格式C域的序号判定
     bool IFrameCBlocksSerialConfirm(char (&C)[4]);
+
+    //对VR原子操作
+    void SetV_R();
+    int GetV_R();
+
+    //重置所有变量
+    bool ReSetValue();
 
 signals:
     //----------连接是否成功-------
@@ -147,6 +158,7 @@ public slots:
 public:
     //发送S帧
     bool SFrameSendSession();
+    bool ReportSFrameSendSession();
     //接收S帧
     bool SFrameRecvSession();
     //判定是否发送S帧

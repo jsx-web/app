@@ -52,6 +52,7 @@ private:
     QStandardItemModel* dirmodel;
     QStandardItemModel* remotevaluemodel;
     QStringList list;
+    QStringList defaultlist;
     QStandardItemModel* writevaluemodel;
     QMenu *popMenu1;
     QAction *action1_1;
@@ -70,6 +71,8 @@ private:
     void IconInit();
     void ProgressBarInit();
     void TimeLableInit();
+    void DefaultListInit();
+    void VisableInit();
 private slots:
     void timerUpdate();
 signals:
@@ -120,6 +123,7 @@ private slots:
     void slotRemoteValueControl(int operation,int ValueNum,int ValueMin,int ValueMax,
                                 unsigned char Flag,QString ObjAddr,unsigned char Tag,
                                 QString Value);
+    void RemoteValueEncode(unsigned char Tag, QString Value, int row);
     //-------接收写参数的接收-----
     void slotDialogWriteValue(QString addr ,QString tag, QString value);
     //----------接收写参数的右击菜单----

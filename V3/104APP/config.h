@@ -122,6 +122,7 @@ typedef union
 
 bool Uchar_to_cp56time2a(unsigned char *date,st_cp56time2a *time);
 bool cp56time2a_to_char(char (&date)[7],st_cp56time2a time);
+bool cp56time2a_to_char(char **date,st_cp56time2a time);
 QString get_cp56time2a_string(st_cp56time2a *time);
 uint64_t get_cp56time2a_hex(st_cp56time2a *time);
 void show_str(char *buf , int len);

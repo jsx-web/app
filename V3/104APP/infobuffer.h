@@ -31,6 +31,8 @@ public:
     bool poll(Info &top);
     //清空队列
     bool clearBuffer();
+    //查看队尾
+    bool top(Info &top);
 
 public:
     friend class Session;
